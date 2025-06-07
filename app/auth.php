@@ -1,20 +1,10 @@
 <?php
-// app/auth.php
 
-// Include configuration for database connection
 require_once __DIR__ . '/config.php';
 
-/**
- * Attempts to log in a user.
- *
- * @param string $username The username provided by the user.
- * @param string $password The plain-text password provided by the user.
- * @return bool True if login is successful, false otherwise.
- */
 function loginUser($username, $password) {
     $conn = getDbConnection();
 
-    // Prepare statement to prevent SQL injection
     $stmt = $conn->prepare("SELECT id, username, password_hash FROM users WHERE username = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
@@ -22,9 +12,7 @@ function loginUser($username, $password) {
 
     if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
-        // Verify the provided password against the stored hash
         if (password_verify($password, $user['password_hash'])) {
-            // Password is correct, set session variables
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $stmt->close();
@@ -35,42 +23,25 @@ function loginUser($username, $password) {
 
     $stmt->close();
     $conn->close();
-    return false; // Login failed
+    return false; 
 }
 
-/**
- * Logs out the current user by destroying the session.
- */
 function logoutUser() {
-    $_SESSION = array(); // Clear all session variables
-    session_destroy();    // Destroy the session
-    header("Location: login.php"); // Redirect to login page
+    $_SESSION = array(); 
+    session_destroy();
+    header("Location: login.php");
     exit();
 }
 
-/**
- * Checks if a user is currently logged in.
- *
- * @return bool True if a user is logged in, false otherwise.
- */
 function isLoggedIn() {
     return isset($_SESSION['user_id']);
 }
 
-/**
- * Registers a new user.
- *
- * @param string $username The username for the new user.
- * @param string $password The plain-text password for the new user.
- * @return bool True if registration is successful, false otherwise.
- */
 function registerUser($username, $password) {
     $conn = getDbConnection();
 
-    // Hash the password
     $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
-    // Prepare statement to insert new user
     $stmt = $conn->prepare("INSERT INTO users (username, password_hash) VALUES (?, ?)");
     $stmt->bind_param("ss", $username, $password_hash);
 
@@ -79,7 +50,6 @@ function registerUser($username, $password) {
         $conn->close();
         return true;
     } else {
-        // Handle potential errors like duplicate username
         error_log("Error registering user: " . $stmt->error);
         $stmt->close();
         $conn->close();

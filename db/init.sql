@@ -23,14 +23,3 @@ CREATE TABLE IF NOT EXISTS courses (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
-
--- Insert a default admin user for testing (password: "password123")
--- In a real app, users would register via a form.
-INSERT IGNORE INTO users (username, password_hash) VALUES
-('admin', '$2y$10$iN.yQ6fX4e.sL.t8t.5Gj.u.a/N2r.rZg9c6N7q5M0H.kZ0O9L.s2O'); -- Hashed 'password123'
-
--- Insert some dummy course data for the 'admin' user (if courses table is new or empty)
--- Ensure 'admin' user exists before running this for the first time
-INSERT IGNORE INTO courses (user_id, course_code, course_name, credits, department) VALUES
-((SELECT id FROM users WHERE username = 'admin'), 'CS101', 'Introduction to Computer Science', 3, 'Computer Science'),
-((SELECT id FROM users WHERE username = 'admin'), 'MA201', 'Calculus I', 4, 'Mathematics');

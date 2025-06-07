@@ -1,8 +1,4 @@
-<?php
-// app/templates/course_list.php
-
-// $courses variable is passed from index.php
-?>
+<?php?>
 <div class="p-6 bg-green-50 rounded-lg shadow-sm">
     <h2 class="text-2xl font-semibold text-green-700 mb-4">My Existing Courses</h2>
     <div class="overflow-x-auto">
