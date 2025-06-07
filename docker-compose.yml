@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: your_root_password # Change this!
+      MYSQL_DATABASE: university_courses
+      MYSQL_USER: php_user
+      MYSQL_PASSWORD: php_password # Change this!
+    ports:
+      - "3306:3306" # Expose MySQL port to your host
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d # Mount SQL init script
+      - db_data:/var/lib/mysql # Persist database data
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  php-app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: php_app
+    ports:
+      - "8000:80" # Expose PHP app on port 8000
+    volumes:
+      - ./app:/var/www/html # Mount your PHP code
+    depends_on:
+      db:
+        condition: service_healthy # Ensure DB is ready before starting app
+
+volumes:
+  db_data: # Define the named volume for persistent data
