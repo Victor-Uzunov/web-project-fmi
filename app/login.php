@@ -1,18 +1,15 @@
 <?php
-// app/login.php
 
-require_once __DIR__ . '/config.php'; // For session_start() and DB connection
-require_once __DIR__ . '/auth.php';   // For loginUser() and isLoggedIn()
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/auth.php';
 
 $message = '';
 
-// If already logged in, redirect to index.php
 if (isLoggedIn()) {
     header("Location: index.php");
     exit();
 }
 
-// Handle login form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['login'])) {
     $username = trim($_POST['username']);
     $password = $_POST['password'];
@@ -21,7 +18,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['login'])) {
         $message = "<p class='text-red-600 font-semibold mb-4'>Please fill in all fields.</p>";
     } else {
         if (loginUser($username, $password)) {
-            header("Location: index.php"); // Redirect on successful login
+            header("Location: index.php");
             exit();
         } else {
             $message = "<p class='text-red-600 font-semibold mb-4'>Invalid username or password.</p>";
@@ -29,7 +26,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['login'])) {
     }
 }
 
-// Handle registration form submission (simple example for new users)
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
     $username = trim($_POST['reg_username']);
     $password = $_POST['reg_password'];
@@ -37,7 +33,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
     if (empty($username) || empty($password)) {
         $message = "<p class='text-red-600 font-semibold mb-4'>Please fill in all fields for registration.</p>";
     } else {
-        // Basic password strength check
         if (strlen($password) < 6) {
              $message = "<p class='text-red-600 font-semibold mb-4'>Password must be at least 6 characters long.</p>";
         } else {
@@ -79,7 +74,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
     <div class="container mx-auto max-w-md bg-white rounded-lg shadow-xl p-8">
         <h1 class="text-3xl font-bold text-center text-indigo-700 mb-6">Welcome to Course Manager</h1>
 
-        <?php echo $message; // Display messages ?>
+        <?php echo $message;?>
 
         <div class="mb-8 p-6 bg-blue-50 rounded-lg shadow-sm">
             <h2 class="text-2xl font-semibold text-blue-700 mb-4">Login</h2>
