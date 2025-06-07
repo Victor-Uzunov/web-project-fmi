@@ -1,8 +1,12 @@
-<?php?>
+<?php
+// app/templates/add_course_form.php
+
+// This file expects the $message variable to be available from index.php or dashboard.php.
+?>
 <div class="mb-10 p-6 bg-blue-50 rounded-lg shadow-sm">
     <h2 class="text-2xl font-semibold text-blue-700 mb-4">Add New Course</h2>
     <?php if (!empty($message)): ?>
-        <p class="<?php echo strpos($message, 'successfully') !== false ? 'text-green-600' : 'text-red-600'; ?> font-semibold mb-4"><?php echo $message; ?></p>
+        <p class="<?php echo strpos($message, 'successfully') !== false ? 'text-green-600' : 'text-red-600'; ?> font-semibold mb-4"><?php echo htmlspecialchars($message); ?></p>
     <?php endif; ?>
     <form action="index.php" method="post" class="space-y-4">
         <div>

@@ -38,7 +38,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
         } else {
             if (registerUser($username, $password)) {
                 $message = "<p class='text-green-600 font-semibold mb-4'>Registration successful! You can now log in.</p>";
-                // Optionally, log them in directly
+                // Optionally, log them in directly after registration
                 // if (loginUser($username, $password)) {
                 //     header("Location: index.php");
                 //     exit();
