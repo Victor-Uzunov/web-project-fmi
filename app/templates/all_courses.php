@@ -50,8 +50,7 @@
         <table class="min-w-full divide-y divide-gray-200 shadow-md rounded-lg overflow-hidden">
             <thead class="bg-green-100">
                 <tr>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider rounded-tl-lg">ID</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Code</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider rounded-tl-lg">Code</th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Name</th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Credits</th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Department</th>
@@ -62,8 +61,7 @@
                 <?php if (!empty($courses_to_display)): ?>
                     <?php foreach ($courses_to_display as $course): ?>
                         <tr class='hover:bg-gray-50'>
-                            <td class='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'><?php echo htmlspecialchars($course['id']); ?></td>
-                            <td class='px-6 py-4 whitespace-nowrap text-sm text-gray-700'><?php echo htmlspecialchars($course['course_code']); ?></td>
+                            <td class='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'><?php echo htmlspecialchars($course['course_code']); ?></td>
                             <td class='px-6 py-4 whitespace-nowrap text-sm text-gray-700'><?php echo htmlspecialchars($course['course_name']); ?></td>
                             <td class='px-6 py-4 whitespace-nowrap text-sm text-gray-700'><?php echo htmlspecialchars($course['credits']); ?></td>
                             <td class='px-6 py-4 whitespace-nowrap text-sm text-gray-700'><?php echo htmlspecialchars($course['department']); ?></td>
@@ -81,7 +79,7 @@
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <tr><td colspan='6' class='px-6 py-4 text-sm text-gray-500 text-center'>No courses found.</td></tr>
+                    <tr><td colspan='5' class='px-6 py-4 text-sm text-gray-500 text-center'>No courses found.</td></tr>
                 <?php endif; ?>
             </tbody>
         </table>
