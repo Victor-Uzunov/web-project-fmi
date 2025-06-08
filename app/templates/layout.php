@@ -23,11 +23,13 @@ require_once __DIR__ . '/../auth.php';
     </style>
 </head>
 <body class="p-8">
-    <div class="container mx-auto max-w-6xl bg-white rounded-lg shadow-xl p-8">
+    <div class="container mx-auto max-w-7xl bg-white rounded-lg shadow-xl p-8">
         <header class="flex justify-between items-center mb-8 rounded-md bg-indigo-100 p-4">
             <h1 class="text-4xl font-bold text-indigo-700">University Course Manager</h1>
             <?php if (isLoggedIn()): // Use the helper function ?>
                 <div class="text-lg text-gray-700 flex items-center">
+                    <a href="index.php" class="text-indigo-600 hover:text-indigo-800 mr-4">My Courses</a>
+                    <a href="graph.php" class="text-indigo-600 hover:text-indigo-800 mr-4">Course Graph</a>
                     <span>Welcome, <span class="font-semibold text-indigo-800"><?php echo htmlspecialchars($_SESSION['username']); ?></span>!</span>
                     <form action="index.php" method="post" class="ml-4">
                         <button type="submit" name="logout"
