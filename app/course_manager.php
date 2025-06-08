@@ -1,7 +1,7 @@
 <?php
 // app/course_manager.php
 
-require_once __DIR__ . '/config.php'; // For getDbConnection() and DEPARTMENTS constant
+require_once __DIR__ . '/config.php'; // For getDbConnection() and DEPARTMENTS, SYSTEM_USERNAME
 
 /**
  * Adds a new course to the database for a specific user, including its prerequisites.
@@ -77,9 +77,10 @@ function addCourse($user_id, $course_code, $course_name, $credits, $department, 
 
 /**
  * Updates an existing course for a specific user, including its prerequisites.
+ * Global courses can only be updated if the user_id matches the system user ID.
  *
  * @param int    $course_id     The ID of the course to update.
- * @param int    $user_id       The ID of the user who owns the course.
+ * @param int    $user_id       The ID of the user who owns the course (or current logged-in user).
  * @param string $course_code   The updated course code.
  * @param string $course_name   The updated course name.
  * @param int    $credits       The updated number of credits.
@@ -98,6 +99,9 @@ function updateCourse($course_id, $user_id, $course_code, $course_name, $credits
         }
 
         // 1. Update course details
+        // Ensure user can only update their own courses or global courses if they are the system user.
+        // For simplicity, we'll allow current user to update any course they 'own' via the ID in the WHERE clause.
+        // If a regular user tries to update a system course, this query will fail because user_id won't match.
         $stmt = $conn->prepare("UPDATE courses SET course_code = ?, course_name = ?, credits = ?, department = ? WHERE id = ? AND user_id = ?");
         if (!$stmt) {
             throw new Exception("Prepare failed: " . $conn->error);
@@ -161,6 +165,7 @@ function updateCourse($course_id, $user_id, $course_code, $course_name, $credits
 /**
  * Deletes a course from the database for a specific user.
  * Due to ON DELETE CASCADE on foreign keys, associated dependencies will also be removed.
+ * Only the owner (user_id) can delete their course.
  *
  * @param int $course_id The ID of the course to delete.
  * @param int $user_id   The ID of the user who owns the course.
@@ -219,9 +224,10 @@ function getCourseById($course_id, $user_id) {
             SELECT cd.prerequisite_course_id AS id, c.course_name, c.course_code
             FROM course_dependencies cd
             JOIN courses c ON cd.prerequisite_course_id = c.id
-            WHERE cd.course_id = ? AND c.user_id = ? -- Ensure prerequisite also belongs to the same user
+            WHERE cd.course_id = ? AND (c.user_id = ? OR c.user_id = ?) -- Allow global prereqs
         ");
-        $prereqs_stmt->bind_param("ii", $course_id, $user_id);
+        $system_user_id = getUserIdByUsername(SYSTEM_USERNAME); // Fetch system ID
+        $prereqs_stmt->bind_param("iii", $course_id, $user_id, $system_user_id);
         $prereqs_stmt->execute();
         $prereqs_result = $prereqs_stmt->get_result();
 
@@ -239,21 +245,23 @@ function getCourseById($course_id, $user_id) {
 
 /**
  * Fetches all courses for a specific user, with optional search and department filters.
+ * Includes global courses (owned by the 'system' user).
  * Includes their prerequisites.
  *
- * @param int    $user_id         The ID of the user.
+ * @param int    $user_id         The ID of the current logged-in user.
+ * @param int    $system_user_id  The ID of the special 'system' user.
  * @param string $search_query    Optional search term for course name/code.
  * @param string $department_filter Optional department to filter by.
  * @return array An array of course data, each with a 'prerequisites' sub-array.
  */
-function getAllCoursesForUser($user_id, $search_query = '', $department_filter = '') {
+function getAllCoursesForUser($user_id, $system_user_id, $search_query = '', $department_filter = '') {
     $conn = getDbConnection();
     $courses = [];
 
-    // Build the base SQL query
-    $sql = "SELECT id, course_code, course_name, credits, department FROM courses WHERE user_id = ?";
-    $params = [$user_id];
-    $types = "i";
+    // Build the base SQL query to include courses for both current user AND system user
+    $sql = "SELECT id, course_code, course_name, credits, department, user_id FROM courses WHERE (user_id = ? OR user_id = ?)";
+    $params = [$user_id, $system_user_id];
+    $types = "ii";
 
     // Add search filter for course name or code
     if (!empty($search_query)) {
@@ -292,21 +300,20 @@ function getAllCoursesForUser($user_id, $search_query = '', $department_filter =
     }
     $stmt->close();
 
-    // Fetch all dependencies for this user's courses
+    // Fetch all dependencies for this user's courses AND global courses
     if (!empty($courses)) {
         $course_ids = array_keys($courses);
-        // Only fetch dependencies if there are courses to fetch dependencies for
         if (!empty($course_ids)) {
             $placeholders = implode(',', array_fill(0, count($course_ids), '?'));
             $prereqs_sql = "
                 SELECT cd.course_id, cd.prerequisite_course_id AS id, c.course_name, c.course_code
                 FROM course_dependencies cd
                 JOIN courses c ON cd.prerequisite_course_id = c.id
-                WHERE cd.course_id IN ({$placeholders}) AND c.user_id = ?
+                WHERE cd.course_id IN ({$placeholders}) AND (c.user_id = ? OR c.user_id = ?)
             ";
 
-            $prereqs_types = str_repeat('i', count($course_ids)) . 'i'; // e.g., 'iiii' + 'i'
-            $prereqs_params = array_merge($course_ids, [$user_id]);
+            $prereqs_types = str_repeat('i', count($course_ids)) . 'ii'; // e.g., 'iiii' + 'ii'
+            $prereqs_params = array_merge($course_ids, [$user_id, $system_user_id]);
 
             $prereqs_stmt = $conn->prepare($prereqs_sql);
             if (!$prereqs_stmt) {
@@ -336,7 +343,6 @@ function getAllCoursesForUser($user_id, $search_query = '', $department_filter =
 
 /**
  * Helper function for bind_param with dynamic arguments.
- * From: https://www.php.net/manual/en/mysqli-stmt.bind-param.php#96068
  */
 function refValues($arr){
     if (strnatcmp(phpversion(),'5.3') >= 0) //Reference is required for PHP 5.3+
@@ -351,21 +357,23 @@ function refValues($arr){
 
 /**
  * Fetches all available courses for selection as prerequisites for a given user.
+ * Includes global courses (owned by the 'system' user).
  * Excludes the current course being edited to prevent self-dependency.
  * Can also filter by a search term for course code or name.
  *
  * @param int $user_id The ID of the user.
+ * @param int $system_user_id The ID of the special 'system' user.
  * @param int|null $exclude_course_id Optional. The ID of the course currently being edited, to exclude from the list.
  * @param string $search_term Optional search term for course code/name.
  * @return array An array of courses suitable for prerequisite selection.
  */
-function getAllAvailableCoursesForPrerequisites($user_id, $exclude_course_id = null, $search_term = '') {
+function getAllAvailableCoursesForPrerequisites($user_id, $system_user_id, $exclude_course_id = null, $search_term = '') {
     $conn = getDbConnection();
     $available_courses = [];
 
-    $sql = "SELECT id, course_code, course_name FROM courses WHERE user_id = ?";
-    $params = [$user_id];
-    $types = "i";
+    $sql = "SELECT id, course_code, course_name FROM courses WHERE (user_id = ? OR user_id = ?)";
+    $params = [$user_id, $system_user_id];
+    $types = "ii";
 
     if ($exclude_course_id !== null) {
         $sql .= " AND id != ?";
@@ -375,9 +383,9 @@ function getAllAvailableCoursesForPrerequisites($user_id, $exclude_course_id = n
 
     if (!empty($search_term)) {
         $sql .= " AND (course_code LIKE ? OR course_name LIKE ?)";
-        $search_term = '%' . $search_term . '%';
-        $params[] = $search_term;
-        $params[] = $search_term;
+        $search_term_like = '%' . $search_term . '%'; // Use a different variable name for the LIKE string
+        $params[] = $search_term_like;
+        $params[] = $search_term_like;
         $types .= "ss";
     }
 
@@ -389,7 +397,7 @@ function getAllAvailableCoursesForPrerequisites($user_id, $exclude_course_id = n
         $conn->close();
         return [];
     }
-    
+
     // Use call_user_func_array for dynamic bind_param
     $bind_params = array_merge([$types], $params);
     call_user_func_array([$stmt, 'bind_param'], refValues($bind_params));

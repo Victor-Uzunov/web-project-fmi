@@ -4,7 +4,7 @@
 // Database configuration
 define('DB_SERVER', 'db');
 define('DB_USERNAME', 'php_user');
-define('DB_PASSWORD', 'php_password');
+define('DB_PASSWORD', 'php_password'); // IMPORTANT: Change this to your actual password from docker-compose.yml
 define('DB_NAME', 'university_courses');
 
 // Define valid department ENUM values for consistent use across application
@@ -17,6 +17,9 @@ define('DEPARTMENTS', [
     'Soft Skills',
     'Other'
 ]);
+
+// Define the username for the system/global courses
+define('SYSTEM_USERNAME', 'system');
 
 
 // Start session only once
@@ -33,6 +36,27 @@ function getDbConnection() {
         die("Connection failed: Please try again later."); // User-friendly message
     }
     return $conn;
+}
+
+/**
+ * Fetches a user's ID by their username.
+ *
+ * @param string $username The username to search for.
+ * @return int|null The user's ID if found, otherwise null.
+ */
+function getUserIdByUsername($username) {
+    $conn = getDbConnection();
+    $user_id = null;
+    $stmt = $conn->prepare("SELECT id FROM users WHERE username = ?");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($row = $result->fetch_assoc()) {
+        $user_id = $row['id'];
+    }
+    $stmt->close();
+    $conn->close();
+    return $user_id;
 }
 
 ?>
