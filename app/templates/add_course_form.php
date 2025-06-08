@@ -1,7 +1,7 @@
 <?php
 // app/templates/add_course_form.php
 
-// This file expects the $message variable and $prerequisite_options to be available from the parent scope.
+// This file expects the $message variable and $prerequisites_options, $departments_enum to be available from the parent scope.
 ?>
 <div class="mb-10 p-6 bg-blue-50 rounded-lg shadow-sm">
     <h2 class="text-2xl font-semibold text-blue-700 mb-4">Add New Course</h2>
@@ -26,10 +26,18 @@
         </div>
         <div>
             <label for="department" class="block text-sm font-medium text-gray-700">Department:</label>
-            <input type="text" id="department" name="department"
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            <select id="department" name="department" required
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                <?php foreach ($departments_enum as $dept): ?>
+                    <option value="<?php echo htmlspecialchars($dept); ?>"><?php echo htmlspecialchars($dept); ?></option>
+                <?php endforeach; ?>
+            </select>
         </div>
         <div>
+            <label for="prereq_search" class="block text-sm font-medium text-gray-700">Search Prerequisites:</label>
+            <input type="text" id="prereq_search" placeholder="Type to search courses..."
+                   class="mb-2 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+
             <label for="prerequisites" class="block text-sm font-medium text-gray-700">Prerequisites (Ctrl/Cmd + click to select multiple):</label>
             <select id="prerequisites" name="prerequisites[]" multiple
                     class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm h-32 overflow-y-auto">

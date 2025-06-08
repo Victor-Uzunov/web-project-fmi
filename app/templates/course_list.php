@@ -44,8 +44,12 @@
                             </td>
                             <td class='px-6 py-4 whitespace-nowrap text-right text-sm font-medium'>
                                 <button onclick="openEditModal(<?php echo htmlspecialchars(json_encode($course)); ?>)"
-                                        class="text-indigo-600 hover:text-indigo-900 focus:outline-none focus:underline">
+                                        class="text-indigo-600 hover:text-indigo-900 focus:outline-none focus:underline mr-4">
                                     Edit
+                                </button>
+                                <button onclick="deleteCourse(<?php echo htmlspecialchars($course['id']); ?>, '<?php echo htmlspecialchars($course['course_name']); ?>')"
+                                        class="text-red-600 hover:text-red-900 focus:outline-none focus:underline">
+                                    Delete
                                 </button>
                             </td>
                         </tr>

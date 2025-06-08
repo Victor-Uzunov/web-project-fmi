@@ -1,7 +1,7 @@
 <?php
 // app/course_manager.php
 
-require_once __DIR__ . '/config.php'; // For getDbConnection()
+require_once __DIR__ . '/config.php'; // For getDbConnection() and DEPARTMENTS constant
 
 /**
  * Adds a new course to the database for a specific user, including its prerequisites.
@@ -19,6 +19,11 @@ function addCourse($user_id, $course_code, $course_name, $credits, $department, 
     $conn->begin_transaction(); // Start transaction for atomicity
 
     try {
+        // Basic validation for department against DEPARTMENTS enum
+        if (!in_array($department, DEPARTMENTS)) {
+            throw new Exception("Invalid department selected.");
+        }
+
         // 1. Insert the new course
         $stmt = $conn->prepare("INSERT INTO courses (user_id, course_code, course_name, credits, department) VALUES (?, ?, ?, ?, ?)");
         if (!$stmt) {
@@ -51,10 +56,7 @@ function addCourse($user_id, $course_code, $course_name, $credits, $department, 
 
                 foreach ($prerequisite_ids as $prereq_id) {
                     $stmt_prereq->bind_param("ii", $new_course_id, $prereq_id);
-                    // Use execute() and check for success for each.
-                    // For performance with many, consider building a single multi-value insert.
                     if (!$stmt_prereq->execute()) {
-                        // Log error but don't necessarily roll back if one prereq fails (e.g., duplicate)
                         error_log("Failed to add prerequisite {$prereq_id} for course {$new_course_id}: " . $stmt_prereq->error);
                     }
                 }
@@ -90,6 +92,11 @@ function updateCourse($course_id, $user_id, $course_code, $course_name, $credits
     $conn->begin_transaction(); // Start transaction
 
     try {
+        // Basic validation for department against DEPARTMENTS enum
+        if (!in_array($department, DEPARTMENTS)) {
+            throw new Exception("Invalid department selected.");
+        }
+
         // 1. Update course details
         $stmt = $conn->prepare("UPDATE courses SET course_code = ?, course_name = ?, credits = ?, department = ? WHERE id = ? AND user_id = ?");
         if (!$stmt) {
@@ -152,6 +159,42 @@ function updateCourse($course_id, $user_id, $course_code, $course_name, $credits
 }
 
 /**
+ * Deletes a course from the database for a specific user.
+ * Due to ON DELETE CASCADE on foreign keys, associated dependencies will also be removed.
+ *
+ * @param int $course_id The ID of the course to delete.
+ * @param int $user_id   The ID of the user who owns the course.
+ * @return array An associative array with 'success' (bool) and 'message' (string).
+ */
+function deleteCourse($course_id, $user_id) {
+    $conn = getDbConnection();
+    try {
+        $stmt = $conn->prepare("DELETE FROM courses WHERE id = ? AND user_id = ?");
+        if (!$stmt) {
+            throw new Exception("Prepare delete failed: " . $conn->error);
+        }
+        $stmt->bind_param("ii", $course_id, $user_id);
+        if ($stmt->execute()) {
+            if ($stmt->affected_rows > 0) {
+                $stmt->close();
+                $conn->close();
+                return ['success' => true, 'message' => "Course deleted successfully!"];
+            } else {
+                $stmt->close();
+                $conn->close();
+                return ['success' => false, 'message' => "Course not found or you don't have permission to delete it."];
+            }
+        } else {
+            throw new Exception("Error deleting course: " . $stmt->error);
+        }
+    } catch (Exception $e) {
+        $conn->close();
+        return ['success' => false, 'message' => $e->getMessage()];
+    }
+}
+
+
+/**
  * Fetches a single course by its ID for a specific user.
  * Includes its prerequisites.
  *
@@ -195,19 +238,51 @@ function getCourseById($course_id, $user_id) {
 }
 
 /**
- * Fetches all courses for a specific user, including their prerequisites.
+ * Fetches all courses for a specific user, with optional search and department filters.
+ * Includes their prerequisites.
  *
- * @param int $user_id The ID of the user.
+ * @param int    $user_id         The ID of the user.
+ * @param string $search_query    Optional search term for course name/code.
+ * @param string $department_filter Optional department to filter by.
  * @return array An array of course data, each with a 'prerequisites' sub-array.
  */
-function getAllCoursesForUser($user_id) {
+function getAllCoursesForUser($user_id, $search_query = '', $department_filter = '') {
     $conn = getDbConnection();
     $courses = [];
 
-    // Fetch main course details
-    $sql = "SELECT id, course_code, course_name, credits, department FROM courses WHERE user_id = ? ORDER BY created_at DESC";
+    // Build the base SQL query
+    $sql = "SELECT id, course_code, course_name, credits, department FROM courses WHERE user_id = ?";
+    $params = [$user_id];
+    $types = "i";
+
+    // Add search filter for course name or code
+    if (!empty($search_query)) {
+        $sql .= " AND (course_name LIKE ? OR course_code LIKE ?)";
+        $search_term = '%' . $search_query . '%';
+        $params[] = $search_term;
+        $params[] = $search_term;
+        $types .= "ss";
+    }
+
+    // Add department filter
+    if (!empty($department_filter) && in_array($department_filter, DEPARTMENTS)) {
+        $sql .= " AND department = ?";
+        $params[] = $department_filter;
+        $types .= "s";
+    }
+
+    $sql .= " ORDER BY created_at DESC";
+
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $user_id);
+    if (!$stmt) {
+        error_log("Prepare statement for getAllCoursesForUser failed: " . $conn->error);
+        $conn->close();
+        return [];
+    }
+
+    // Use call_user_func_array for dynamic bind_param
+    $bind_params = array_merge([$types], $params);
+    call_user_func_array([$stmt, 'bind_param'], refValues($bind_params));
     $stmt->execute();
     $result = $stmt->get_result();
 
@@ -219,30 +294,29 @@ function getAllCoursesForUser($user_id) {
 
     // Fetch all dependencies for this user's courses
     if (!empty($courses)) {
-        // Using IN clause for efficiency. Max 999 items in IN clause for MySQL,
-        // but for small to medium sets of courses, this is fine.
-        $course_ids_str = implode(',', array_map('intval', array_keys($courses)));
-
-        if (!empty($course_ids_str)) {
+        $course_ids = array_keys($courses);
+        // Only fetch dependencies if there are courses to fetch dependencies for
+        if (!empty($course_ids)) {
+            $placeholders = implode(',', array_fill(0, count($course_ids), '?'));
             $prereqs_sql = "
                 SELECT cd.course_id, cd.prerequisite_course_id AS id, c.course_name, c.course_code
                 FROM course_dependencies cd
                 JOIN courses c ON cd.prerequisite_course_id = c.id
-                WHERE cd.course_id IN ({$course_ids_str}) AND c.user_id = ?
+                WHERE cd.course_id IN ({$placeholders}) AND c.user_id = ?
             ";
-            // Note: Directly injecting $course_ids_str is okay here since it's
-            // generated from validated integer keys from $courses array.
+
+            $prereqs_types = str_repeat('i', count($course_ids)) . 'i'; // e.g., 'iiii' + 'i'
+            $prereqs_params = array_merge($course_ids, [$user_id]);
+
             $prereqs_stmt = $conn->prepare($prereqs_sql);
             if (!$prereqs_stmt) {
                 error_log("Prepare statement for prerequisites failed: " . $conn->error);
-                // Continue without prerequisites or throw an exception based on desired error handling
             } else {
-                $prereqs_stmt->bind_param("i", $user_id);
+                call_user_func_array([$prereqs_stmt, 'bind_param'], refValues(array_merge([$prereqs_types], $prereqs_params)));
                 $prereqs_stmt->execute();
                 $prereqs_result = $prereqs_stmt->get_result();
 
                 while ($prereq_row = $prereqs_result->fetch_assoc()) {
-                    // Ensure the course_id exists in $courses before adding prerequisite
                     if (isset($courses[$prereq_row['course_id']])) {
                         $courses[$prereq_row['course_id']]['prerequisites'][] = [
                             'id' => $prereq_row['id'],
@@ -261,14 +335,31 @@ function getAllCoursesForUser($user_id) {
 }
 
 /**
+ * Helper function for bind_param with dynamic arguments.
+ * From: https://www.php.net/manual/en/mysqli-stmt.bind-param.php#96068
+ */
+function refValues($arr){
+    if (strnatcmp(phpversion(),'5.3') >= 0) //Reference is required for PHP 5.3+
+    {
+        $refs = array();
+        foreach($arr as $key => $value)
+            $refs[$key] = &$arr[$key];
+        return $refs;
+    }
+    return $arr;
+}
+
+/**
  * Fetches all available courses for selection as prerequisites for a given user.
  * Excludes the current course being edited to prevent self-dependency.
+ * Can also filter by a search term for course code or name.
  *
  * @param int $user_id The ID of the user.
  * @param int|null $exclude_course_id Optional. The ID of the course currently being edited, to exclude from the list.
+ * @param string $search_term Optional search term for course code/name.
  * @return array An array of courses suitable for prerequisite selection.
  */
-function getAllAvailableCoursesForPrerequisites($user_id, $exclude_course_id = null) {
+function getAllAvailableCoursesForPrerequisites($user_id, $exclude_course_id = null, $search_term = '') {
     $conn = getDbConnection();
     $available_courses = [];
 
@@ -281,10 +372,27 @@ function getAllAvailableCoursesForPrerequisites($user_id, $exclude_course_id = n
         $params[] = $exclude_course_id;
         $types .= "i";
     }
+
+    if (!empty($search_term)) {
+        $sql .= " AND (course_code LIKE ? OR course_name LIKE ?)";
+        $search_term = '%' . $search_term . '%';
+        $params[] = $search_term;
+        $params[] = $search_term;
+        $types .= "ss";
+    }
+
     $sql .= " ORDER BY course_code ASC";
 
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param($types, ...$params);
+    if (!$stmt) {
+        error_log("Prepare statement for getAllAvailableCoursesForPrerequisites failed: " . $conn->error);
+        $conn->close();
+        return [];
+    }
+    
+    // Use call_user_func_array for dynamic bind_param
+    $bind_params = array_merge([$types], $params);
+    call_user_func_array([$stmt, 'bind_param'], refValues($bind_params));
     $stmt->execute();
     $result = $stmt->get_result();
 
