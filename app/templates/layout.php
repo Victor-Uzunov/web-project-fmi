@@ -107,7 +107,7 @@ require_once __DIR__ . '/../auth.php';
     <div class="decorative-circle circle-2"></div>
     <div class="decorative-circle circle-3"></div>
 
-    <div class="container mx-auto max-w-7xl bg-white rounded-lg shadow-xl p-8">
+    <div class="container mx-auto max-w-9xl bg-white rounded-lg shadow-xl p-8">
         <header class="flex justify-between items-center mb-8 rounded-md header-gradient p-6">
             <h1 class="text-4xl font-bold text-white">University Course Manager</h1>
             <?php if (isLoggedIn()): ?>
@@ -163,6 +163,15 @@ require_once __DIR__ . '/../auth.php';
                         </svg>
                         Show Graph
                     </a>
+                    <div class="flex-grow"></div>
+                    <button onclick="document.getElementById('csvFileInput').click()" 
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        Import
+                    </button>
+                    <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleCSVUpload(this.files[0])">
                 <?php else: ?>
                     <a href="<?php echo $courses_link; ?>" 
                         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -185,6 +194,26 @@ require_once __DIR__ . '/../auth.php';
         <main>
             <?php include $content_template_path; ?>
         </main>
+    </div>
+
+    <!-- Import Results Modal -->
+    <div id="importResultsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-indigo-700">Import Results</h2>
+                <button type="button" class="text-gray-400 hover:text-gray-600 text-3xl font-bold" onclick="closeImportResultsModal()">
+                    &times;
+                </button>
+            </div>
+            <div id="importResultsContent" class="space-y-4">
+                <!-- Results will be inserted here -->
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button onclick="closeImportResultsModal()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Close
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Include JavaScript for modal functionality -->
@@ -222,6 +251,110 @@ require_once __DIR__ . '/../auth.php';
             // Toggle the clicked dropdown
             dropdown.classList.toggle('hidden');
         }
+    </script>
+    <script>
+    function handleCSVUpload(file) {
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('csvFile', file);
+
+        // Show loading state
+        const modal = document.getElementById('importResultsModal');
+        const content = document.getElementById('importResultsContent');
+        content.innerHTML = '<div class="text-center py-4"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div><p class="mt-2 text-gray-600">Importing courses...</p></div>';
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        fetch('api/import_courses.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            let html = '';
+            
+            if (data.error) {
+                html = `
+                    <div class="bg-red-50 border-l-4 border-red-400 p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-red-700">${data.message}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                html = `
+                    <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-green-700">${data.message}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                if (data.details.errors.length > 0) {
+                    html += `
+                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-yellow-800">Errors occurred during import:</h3>
+                                    <div class="mt-2 text-sm text-yellow-700">
+                                        <ul class="list-disc pl-5 space-y-1">
+                                            ${data.details.errors.map(error => `<li>${error}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            content.innerHTML = html;
+        })
+        .catch(error => {
+            content.innerHTML = `
+                <div class="bg-red-50 border-l-4 border-red-400 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-red-700">Failed to import courses: ${error.message}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function closeImportResultsModal() {
+        const modal = document.getElementById('importResultsModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        // Clear the file input
+        document.getElementById('csvFileInput').value = '';
+    }
     </script>
 </body>
 </html>
