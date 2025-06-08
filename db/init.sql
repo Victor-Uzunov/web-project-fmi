@@ -12,11 +12,10 @@ CREATE TABLE IF NOT EXISTS users (
 DROP TABLE IF EXISTS course_dependencies;
 DROP TABLE IF EXISTS courses;
 
--- Create the courses table (department as ENUM, unique per user_id and course_code)
+-- Create the courses table (department as ENUM, course_code as PRIMARY KEY)
 CREATE TABLE IF NOT EXISTS courses (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    course_code VARCHAR(20) PRIMARY KEY,
     user_id INT NOT NULL,              -- Link to the user who created the course (could be a regular user or 'system' user)
-    course_code VARCHAR(20) NOT NULL,
     course_name VARCHAR(255) NOT NULL,
     credits INT NOT NULL,
     department ENUM('Mathematics', 'Software Technologies', 'Informatics', 'Database', 'English', 'Soft Skills', 'Other') NOT NULL DEFAULT 'Other',
@@ -27,11 +26,11 @@ CREATE TABLE IF NOT EXISTS courses (
 
 -- Create the course_dependencies table for prerequisites
 CREATE TABLE IF NOT EXISTS course_dependencies (
-    course_id INT NOT NULL,
-    prerequisite_course_id INT NOT NULL,
-    PRIMARY KEY (course_id, prerequisite_course_id), -- Composite primary key
-    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
-    FOREIGN KEY (prerequisite_course_id) REFERENCES courses(id) ON DELETE CASCADE
+    course_code VARCHAR(20) NOT NULL,
+    prerequisite_course_code VARCHAR(20) NOT NULL,
+    PRIMARY KEY (course_code, prerequisite_course_code), -- Composite primary key
+    FOREIGN KEY (course_code) REFERENCES courses(course_code) ON DELETE CASCADE,
+    FOREIGN KEY (prerequisite_course_code) REFERENCES courses(course_code) ON DELETE CASCADE
 );
 
 INSERT IGNORE INTO users (username, password_hash) VALUES

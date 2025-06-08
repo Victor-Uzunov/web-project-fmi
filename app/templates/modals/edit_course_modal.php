@@ -2,6 +2,12 @@
 // app/templates/modals/edit_course_modal.php
 // This modal expects $prerequisite_options and $departments_enum to be available from the parent scope.
 ?>
+<script>
+    console.log('Edit modal template loaded');
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Edit modal element exists:', !!document.getElementById('editCourseModal'));
+    });
+</script>
 
 <div id="editCourseModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
@@ -13,7 +19,8 @@
         </div>
 
         <form action="index.php" method="post" id="editCourseForm" class="space-y-4">
-            <input type="hidden" name="course_id" id="edit_course_id">
+            <input type="hidden" name="old_course_code" id="edit_old_course_code">
+            <input type="hidden" name="course_code" id="edit_course_code">
 
             <div>
                 <label for="edit_course_code" class="block text-sm font-medium text-gray-700">Course Code:</label>
@@ -50,7 +57,7 @@
                         class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm h-32 overflow-y-auto">
                     <?php if (!empty($prerequisite_options)): ?>
                         <?php foreach ($prerequisite_options as $option): ?>
-                            <option value="<?php echo htmlspecialchars($option['id']); ?>">
+                            <option value="<?php echo htmlspecialchars($option['course_code']); ?>">
                                 <?php echo htmlspecialchars($option['course_code'] . ' - ' . $option['course_name']); ?>
                             </option>
                         <?php endforeach; ?>

@@ -37,10 +37,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $credits = (int)($_POST['credits'] ?? 0);
     $department = trim($_POST['department'] ?? '');
 
-    // Get prerequisite IDs, ensuring they are integers and filter out invalid ones
-    $prerequisite_ids = isset($_POST['prerequisites']) ? (array)$_POST['prerequisites'] : [];
-    $prerequisite_ids = array_map('intval', $prerequisite_ids);
-    $prerequisite_ids = array_filter($prerequisite_ids, function($id) { return $id > 0; });
+    // Get prerequisite course codes, ensuring they are strings and filter out invalid ones
+    $prerequisite_codes = isset($_POST['prerequisites']) ? (array)$_POST['prerequisites'] : [];
+    $prerequisite_codes = array_filter($prerequisite_codes, function($code) { return !empty($code); });
 
 
     if (isset($_POST["add_course"])) {
@@ -51,19 +50,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $message = "Credits must be a positive number.";
         } else {
             // Courses are added by the current logged-in user
-            $response = addCourse($current_user_id, $course_code, $course_name, $credits, $department, $prerequisite_ids);
+            $response = addCourse($current_user_id, $course_code, $course_name, $credits, $department, $prerequisite_codes);
             $message = $response['message'];
         }
     } elseif (isset($_POST["update_course"])) {
-        $course_id = (int)($_POST['course_id'] ?? 0); // Get the ID of the course being updated
+        $old_course_code = trim($_POST['old_course_code'] ?? ''); // Get the code of the course being updated
         // Determine the actual owner of the course being updated
         // This is important to ensure only owner can update.
         // We fetch the course to ensure the current user (or system user for global courses) has permission.
         $target_course_owner_id = null;
         $conn_check_owner = getDbConnection(); // Use a new connection for a quick check
-        $stmt_check_owner = $conn_check_owner->prepare("SELECT user_id FROM courses WHERE id = ?");
+        $stmt_check_owner = $conn_check_owner->prepare("SELECT user_id FROM courses WHERE course_code = ?");
         if ($stmt_check_owner) {
-            $stmt_check_owner->bind_param("i", $course_id);
+            $stmt_check_owner->bind_param("s", $old_course_code);
             $stmt_check_owner->execute();
             $result_check_owner = $stmt_check_owner->get_result();
             if ($row_check_owner = $result_check_owner->fetch_assoc()) {
@@ -76,27 +75,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Only allow update if current user is the owner OR is the system user and updating a global course
         if ($target_course_owner_id !== null && ($target_course_owner_id === $current_user_id || ($target_course_owner_id === $system_user_id && $current_user_id === $system_user_id))) {
             // Validation for updating a course
-            if ($course_id <= 0 || empty($course_code) || empty($course_name) || empty($credits)) {
+            if (empty($old_course_code) || empty($course_code) || empty($course_name) || empty($credits)) {
                 $message = "Invalid input for course update. Please fill all required fields.";
             } else if ($credits < 1) {
                 $message = "Credits must be a positive number.";
             } else {
                 // Pass the *actual owner's ID* to updateCourse, not the current_user_id if it's a global course
                 // This ensures the WHERE clause in updateCourse correctly finds the record
-                $response = updateCourse($course_id, $target_course_owner_id, $course_code, $course_name, $credits, $department, $prerequisite_ids);
+                $response = updateCourse($old_course_code, $target_course_owner_id, $course_code, $course_name, $credits, $department, $prerequisite_codes);
                 $message = $response['message'];
             }
         } else {
             $message = "You do not have permission to update this course.";
         }
     } elseif (isset($_POST["delete_course"])) {
-        $course_id = (int)($_POST['course_id'] ?? 0); // Get the ID of the course to delete
+        $course_code = trim($_POST['course_code'] ?? ''); // Get the code of the course to delete
 
         $target_course_owner_id = null;
         $conn_check_owner = getDbConnection();
-        $stmt_check_owner = $conn_check_owner->prepare("SELECT user_id FROM courses WHERE id = ?");
+        $stmt_check_owner = $conn_check_owner->prepare("SELECT user_id FROM courses WHERE course_code = ?");
         if ($stmt_check_owner) {
-            $stmt_check_owner->bind_param("i", $course_id);
+            $stmt_check_owner->bind_param("s", $course_code);
             $stmt_check_owner->execute();
             $result_check_owner = $stmt_check_owner->get_result();
             if ($row_check_owner = $result_check_owner->fetch_assoc()) {
@@ -108,11 +107,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Only allow deletion if current user is the owner OR is the system user and deleting a global course
         if ($target_course_owner_id !== null && ($target_course_owner_id === $current_user_id || ($target_course_owner_id === $system_user_id && $current_user_id === $system_user_id))) {
-            if ($course_id <= 0) {
-                $message = "Invalid course ID for deletion.";
+            if (empty($course_code)) {
+                $message = "Invalid course code for deletion.";
             } else {
                 // Pass the *actual owner's ID* to deleteCourse
-                $response = deleteCourse($course_id, $target_course_owner_id);
+                $response = deleteCourse($course_code, $target_course_owner_id);
                 $message = $response['message'];
             }
         } else {

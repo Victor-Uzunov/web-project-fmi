@@ -188,7 +188,14 @@ require_once __DIR__ . '/../auth.php';
     </div>
 
     <!-- Include JavaScript for modal functionality -->
-    <script src="js/script.js"></script>
+    <script>
+        console.log('Loading script.js...');
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            console.error('Error: ' + msg + '\nURL: ' + url + '\nLine: ' + lineNo + '\nColumn: ' + columnNo + '\nError object: ' + JSON.stringify(error));
+            return false;
+        };
+    </script>
+    <script src="js/script.js" onerror="console.error('Failed to load script.js')" onload="console.log('script.js loaded successfully')"></script>
     <script>
         // Close dropdowns when clicking outside
         document.addEventListener('click', function(event) {

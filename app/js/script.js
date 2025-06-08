@@ -2,22 +2,34 @@
 
 // Function to open the edit course modal and populate its fields
 function openEditModal(course) {
+    console.log('Opening edit modal for course:', course);
     const modal = document.getElementById('editCourseModal');
+    console.log('Modal element:', modal);
     
-    const courseIdField = document.getElementById('edit_course_id');
     const courseCodeField = document.getElementById('edit_course_code');
+    const oldCourseCodeField = document.getElementById('edit_old_course_code');
     const courseNameField = document.getElementById('edit_course_name');
     const creditsField = document.getElementById('edit_credits');
-    const departmentSelect = document.getElementById('edit_department'); // It's now a select
-    const prerequisiteSearchInput = document.getElementById('edit_prereq_search'); // New search input for prerequisites
+    const departmentSelect = document.getElementById('edit_department');
+    const prerequisiteSearchInput = document.getElementById('edit_prereq_search');
     const prerequisiteSelect = document.getElementById('edit_prerequisites');
 
+    console.log('Form fields:', {
+        courseCodeField,
+        oldCourseCodeField,
+        courseNameField,
+        creditsField,
+        departmentSelect,
+        prerequisiteSearchInput,
+        prerequisiteSelect
+    });
+
     // Populate form fields with existing course data
-    courseIdField.value = course.id;
+    oldCourseCodeField.value = course.course_code;
     courseCodeField.value = course.course_code;
     courseNameField.value = course.course_name;
     creditsField.value = course.credits;
-    departmentSelect.value = course.department; // Set the selected department
+    departmentSelect.value = course.department;
 
     // Clear previous selections in the prerequisites dropdown
     for (let i = 0; i < prerequisiteSelect.options.length; i++) {
@@ -26,10 +38,10 @@ function openEditModal(course) {
 
     // Select current prerequisites for this course in the dropdown
     if (course.prerequisites && Array.isArray(course.prerequisites) && course.prerequisites.length > 0) {
-        const currentPrerequisiteIds = course.prerequisites.map(p => String(p.id)); // Convert to string for comparison
+        const currentPrerequisiteCodes = course.prerequisites.map(p => p.course_code);
 
         for (let i = 0; i < prerequisiteSelect.options.length; i++) {
-            if (currentPrerequisiteIds.includes(prerequisiteSelect.options[i].value)) {
+            if (currentPrerequisiteCodes.includes(prerequisiteSelect.options[i].value)) {
                 prerequisiteSelect.options[i].selected = true;
             }
         }
@@ -37,11 +49,13 @@ function openEditModal(course) {
 
     // Reset prerequisite search input and apply initial filter
     prerequisiteSearchInput.value = '';
-    filterSelectOptions('edit_prerequisites', 'edit_prereq_search'); // Apply filter to show all options initially
+    filterSelectOptions('edit_prerequisites', 'edit_prereq_search');
 
     // Display the modal
+    console.log('Showing modal...');
     modal.classList.remove('hidden');
-    modal.classList.add('flex'); // Use flex for centering with Tailwind
+    modal.classList.add('flex');
+    console.log('Modal classes after showing:', modal.classList);
 }
 
 // Function to close the edit course modal
@@ -52,28 +66,26 @@ function closeEditModal() {
 }
 
 // Function to handle course deletion
-function deleteCourse(courseId, courseName) {
-    // Using a simple browser confirm for now as per "pop up dialog" request
+function deleteCourse(courseCode, courseName) {
     if (confirm(`Are you sure you want to delete the course "${courseName}"? This action cannot be undone.`)) {
-        // Create a hidden form to send the POST request for deletion
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = 'index.php'; // Submit to the same page that handles logic
+        form.action = 'index.php';
 
-        const inputId = document.createElement('input');
-        inputId.type = 'hidden';
-        inputId.name = 'course_id';
-        inputId.value = courseId;
-        form.appendChild(inputId);
+        const inputCode = document.createElement('input');
+        inputCode.type = 'hidden';
+        inputCode.name = 'course_code';
+        inputCode.value = courseCode;
+        form.appendChild(inputCode);
 
         const inputDelete = document.createElement('input');
         inputDelete.type = 'hidden';
         inputDelete.name = 'delete_course';
-        inputDelete.value = 'true'; // A flag to indicate delete action
+        inputDelete.value = 'true';
         form.appendChild(inputDelete);
 
-        document.body.appendChild(form); // Append the form to the body
-        form.submit(); // Submit the form
+        document.body.appendChild(form);
+        form.submit();
     }
 }
 
@@ -86,18 +98,15 @@ function filterSelectOptions(selectId, searchInputId) {
         const option = select.options[i];
         const optionText = option.textContent.toLowerCase();
         
-        // If the option is the disabled placeholder, always show it.
-        // Otherwise, filter based on search term.
         if (option.disabled && optionText.includes('no other courses available')) {
             option.style.display = '';
         } else if (optionText.includes(searchTerm)) {
-            option.style.display = ''; // Show
+            option.style.display = '';
         } else {
-            option.style.display = 'none'; // Hide
+            option.style.display = 'none';
         }
     }
 }
-
 
 // Event listeners for prerequisite search inputs
 document.addEventListener('DOMContentLoaded', () => {
@@ -117,11 +126,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Close modal when clicking outside (optional, but good UX)
+    // Close modal when clicking outside
     const modal = document.getElementById('editCourseModal');
     if (modal) {
         modal.addEventListener('click', (event) => {
-            // Check if the click was directly on the modal backdrop, not inside the modal content
             if (event.target === modal) {
                 closeEditModal();
             }
