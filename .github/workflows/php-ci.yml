@@ -1,0 +1,45 @@
+# .github/workflows/php-ci.yml
+
+name: PHP CI Checks
+
+# Controls when the workflow will run
+on:
+  pull_request:
+    branches: [ "main" ] # Trigger on pull requests targeting the 'main' branch
+  push:
+    branches: [ "main" ] # Also trigger on pushes to the 'main' branch (e.g., after merges)
+
+jobs:
+  # This job will run checks for PHP code
+  php-checks:
+    runs-on: ubuntu-latest # Use the latest Ubuntu virtual environment
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4 # Action to checkout your repository code
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1' # Specify the PHP version you are using
+        extensions: mysqli, pdo_mysql # Necessary PHP extensions
+        tools: composer # Install Composer tool
+
+    - name: Validate Composer files
+      run: composer validate --strict
+      working-directory: app/ # NEW: Run this command from within the app/ directory
+
+    - name: Install Composer dependencies
+      run: composer install --no-dev --prefer-dist
+      working-directory: app/ # NEW: Run this command from within the app/ directory
+
+    - name: Run PHP Syntax Check (Linting)
+      # Recursively check all PHP files for syntax errors
+      run: |
+        find . -name "*.php" -print0 | xargs -0 -n1 php -l
+      working-directory: app/ # NEW: Run this command from within the app/ directory
+      # Note: Changed `find app/` to `find .` because the working directory is now `app/`
+
+    - name: Display PHP Info (Optional for Debugging)
+      run: php -i
+      # No working-directory needed here as php -i is global
