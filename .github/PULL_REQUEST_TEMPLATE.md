@@ -12,8 +12,9 @@
 
 - [ ] PHP backend logic
 - [ ] Bug fix
-- [ ] MySQL queries/migrations
 - [ ] HTML/CSS/JS frontend
+- [ ] New feature implementation
+- [ ] MySQL queries/migrations
 - [ ] Docker Compose configuration
 
 ---
