@@ -9,14 +9,14 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create the courses table (modified to include user_id, unique per user_id and course_code)
+-- Create the courses table (modified department to ENUM, unique per user_id and course_code)
 CREATE TABLE IF NOT EXISTS courses (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,              -- Link to the user who created the course
     course_code VARCHAR(20) NOT NULL,
     course_name VARCHAR(255) NOT NULL,
     credits INT NOT NULL,
-    department VARCHAR(100),
+    department ENUM('Mathematics', 'Software Technologies', 'Informatics', 'Database', 'English', 'Soft Skills', 'Other') NOT NULL DEFAULT 'Other',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     UNIQUE (user_id, course_code) -- Ensure course code is unique PER USER
