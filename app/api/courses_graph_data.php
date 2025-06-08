@@ -26,10 +26,14 @@ foreach ($courses_data as $course) {
     // Add course as a node
     $nodes[] = [
         'id' => $course['id'],
-        'label' => htmlspecialchars($course['course_code']), // Display course code as main label
-        'title' => htmlspecialchars($course['course_name'] . ' (' . $course['department'] . ')'), // Full name and department on hover
+        'label' => htmlspecialchars($course['course_name']), // CHANGED: Display course name as main label
+        'title' => htmlspecialchars($course['course_name'] . ' (' . $course['course_code'] . ') - ' . $course['department'] . ' - ' . $course['credits'] . ' Credits'), // More details on hover
         'group' => htmlspecialchars($course['department']), // Group by department for potential coloring
-        // You can add more properties here for styling (e.g., color, shape)
+        // ADDED: Explicit data for click details in JavaScript
+        'courseCode' => htmlspecialchars($course['course_code']),
+        'courseName' => htmlspecialchars($course['course_name']),
+        'department' => htmlspecialchars($course['department']),
+        'credits' => htmlspecialchars($course['credits']),
     ];
 
     // Add dependencies as edges
