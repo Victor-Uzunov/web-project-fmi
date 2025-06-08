@@ -43,6 +43,32 @@ function closeEditModal() {
     modal.classList.remove('flex');
 }
 
+// Function to handle course deletion
+function deleteCourse(courseId, courseName) {
+    // Using a simple browser confirm for now as per "pop up dialog" request
+    if (confirm(`Are you sure you want to delete the course "${courseName}"? This action cannot be undone.`)) {
+        // Create a hidden form to send the POST request for deletion
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = 'index.php'; // Submit to the same page that handles logic
+
+        const inputId = document.createElement('input');
+        inputId.type = 'hidden';
+        inputId.name = 'course_id';
+        inputId.value = courseId;
+        form.appendChild(inputId);
+
+        const inputDelete = document.createElement('input');
+        inputDelete.type = 'hidden';
+        inputDelete.name = 'delete_course';
+        inputDelete.value = 'true'; // A flag to indicate delete action
+        form.appendChild(inputDelete);
+
+        document.body.appendChild(form); // Append the form to the body
+        form.submit(); // Submit the form
+    }
+}
+
 // Close modal when clicking outside (optional, but good UX)
 document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('editCourseModal');

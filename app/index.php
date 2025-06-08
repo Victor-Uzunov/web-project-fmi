@@ -21,16 +21,15 @@ if (!isLoggedIn()) {
 // --- Course Management Logic (only for logged-in users) ---
 $current_user_id = $_SESSION['user_id'];
 
-// Handle form submissions for both adding and updating courses
+// Handle form submissions for adding, updating, and deleting courses
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Sanitize and validate common fields for both add and update operations
+    // Sanitize and validate common fields for add/update operations
     $course_code = trim($_POST['course_code'] ?? '');
     $course_name = trim($_POST['course_name'] ?? '');
     $credits = (int)($_POST['credits'] ?? 0);
     $department = trim($_POST['department'] ?? '');
     
     // Get prerequisite IDs, ensuring they are integers and filter out invalid ones
-    // This array will be empty if no prerequisites were selected.
     $prerequisite_ids = isset($_POST['prerequisites']) ? (array)$_POST['prerequisites'] : [];
     $prerequisite_ids = array_map('intval', $prerequisite_ids);
     $prerequisite_ids = array_filter($prerequisite_ids, function($id) { return $id > 0; });
@@ -43,7 +42,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         } else if ($credits < 1) {
             $message = "Credits must be a positive number.";
         } else {
-            // Call the addCourse function from course_manager.php
             $response = addCourse($current_user_id, $course_code, $course_name, $credits, $department, $prerequisite_ids);
             $message = $response['message'];
         }
@@ -56,8 +54,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         } else if ($credits < 1) {
             $message = "Credits must be a positive number.";
         } else {
-            // Call the updateCourse function from course_manager.php
             $response = updateCourse($course_id, $current_user_id, $course_code, $course_name, $credits, $department, $prerequisite_ids);
+            $message = $response['message'];
+        }
+    } elseif (isset($_POST["delete_course"])) {
+        $course_id = (int)($_POST['course_id'] ?? 0); // Get the ID of the course to delete
+        if ($course_id <= 0) {
+            $message = "Invalid course ID for deletion.";
+        } else {
+            $response = deleteCourse($course_id, $current_user_id);
             $message = $response['message'];
         }
     }
@@ -82,7 +87,7 @@ $content_template_path = __DIR__ . '/templates/dashboard.php';
 
 // Prepare variables to be available in the templates.
 // These variables will be in the scope when dashboard.php (and its included partials) is rendered.
-$message_for_form = $message; // Message to display in the forms (add/update success/failure)
+$message_for_form = $message; // Message to display in the forms (add/update/delete success/failure)
 $courses_to_display = $courses; // Data for the course list table
 $prerequisite_options = $all_available_courses; // Options for prerequisite dropdowns in forms (for both add and edit forms)
 

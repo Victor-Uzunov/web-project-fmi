@@ -51,10 +51,7 @@ function addCourse($user_id, $course_code, $course_name, $credits, $department, 
 
                 foreach ($prerequisite_ids as $prereq_id) {
                     $stmt_prereq->bind_param("ii", $new_course_id, $prereq_id);
-                    // Use execute() and check for success for each.
-                    // For performance with many, consider building a single multi-value insert.
                     if (!$stmt_prereq->execute()) {
-                        // Log error but don't necessarily roll back if one prereq fails (e.g., duplicate)
                         error_log("Failed to add prerequisite {$prereq_id} for course {$new_course_id}: " . $stmt_prereq->error);
                     }
                 }
@@ -150,6 +147,42 @@ function updateCourse($course_id, $user_id, $course_code, $course_name, $credits
         return ['success' => false, 'message' => $e->getMessage()];
     }
 }
+
+/**
+ * Deletes a course from the database for a specific user.
+ * Due to ON DELETE CASCADE on foreign keys, associated dependencies will also be removed.
+ *
+ * @param int $course_id The ID of the course to delete.
+ * @param int $user_id   The ID of the user who owns the course.
+ * @return array An associative array with 'success' (bool) and 'message' (string).
+ */
+function deleteCourse($course_id, $user_id) {
+    $conn = getDbConnection();
+    try {
+        $stmt = $conn->prepare("DELETE FROM courses WHERE id = ? AND user_id = ?");
+        if (!$stmt) {
+            throw new Exception("Prepare delete failed: " . $conn->error);
+        }
+        $stmt->bind_param("ii", $course_id, $user_id);
+        if ($stmt->execute()) {
+            if ($stmt->affected_rows > 0) {
+                $stmt->close();
+                $conn->close();
+                return ['success' => true, 'message' => "Course deleted successfully!"];
+            } else {
+                $stmt->close();
+                $conn->close();
+                return ['success' => false, 'message' => "Course not found or you don't have permission to delete it."];
+            }
+        } else {
+            throw new Exception("Error deleting course: " . $stmt->error);
+        }
+    } catch (Exception $e) {
+        $conn->close();
+        return ['success' => false, 'message' => $e->getMessage()];
+    }
+}
+
 
 /**
  * Fetches a single course by its ID for a specific user.
