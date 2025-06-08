@@ -412,4 +412,100 @@ function getAllAvailableCoursesForPrerequisites($user_id, $system_user_id, $excl
     return $available_courses;
 }
 
+/**
+ * Fetches only manually added courses for a specific user (excluding system courses).
+ * Includes their prerequisites.
+ *
+ * @param int    $user_id         The ID of the current logged-in user.
+ * @param string $search_query    Optional search term for course name/code.
+ * @param string $department_filter Optional department to filter by.
+ * @return array An array of course data, each with a 'prerequisites' sub-array.
+ */
+function getManuallyAddedCourses($user_id, $search_query = '', $department_filter = '') {
+    $conn = getDbConnection();
+    $courses = [];
+
+    // Build the base SQL query to include only user's manually added courses
+    $sql = "SELECT id, course_code, course_name, credits, department, user_id FROM courses WHERE user_id = ?";
+    $params = [$user_id];
+    $types = "i";
+
+    // Add search filter for course name or code
+    if (!empty($search_query)) {
+        $sql .= " AND (course_name LIKE ? OR course_code LIKE ?)";
+        $search_term = '%' . $search_query . '%';
+        $params[] = $search_term;
+        $params[] = $search_term;
+        $types .= "ss";
+    }
+
+    // Add department filter
+    if (!empty($department_filter) && in_array($department_filter, DEPARTMENTS)) {
+        $sql .= " AND department = ?";
+        $params[] = $department_filter;
+        $types .= "s";
+    }
+
+    $sql .= " ORDER BY created_at DESC";
+
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        error_log("Prepare statement for getManuallyAddedCourses failed: " . $conn->error);
+        $conn->close();
+        return [];
+    }
+
+    // Use call_user_func_array for dynamic bind_param
+    $bind_params = array_merge([$types], $params);
+    call_user_func_array([$stmt, 'bind_param'], refValues($bind_params));
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    while($row = $result->fetch_assoc()) {
+        $courses[$row['id']] = $row; // Use ID as key for easy lookup
+        $courses[$row['id']]['prerequisites'] = []; // Initialize prerequisites array
+    }
+    $stmt->close();
+
+    // Fetch all dependencies for this user's courses
+    if (!empty($courses)) {
+        $course_ids = array_keys($courses);
+        if (!empty($course_ids)) {
+            $placeholders = implode(',', array_fill(0, count($course_ids), '?'));
+            $prereqs_sql = "
+                SELECT cd.course_id, cd.prerequisite_course_id AS id, c.course_name, c.course_code
+                FROM course_dependencies cd
+                JOIN courses c ON cd.prerequisite_course_id = c.id
+                WHERE cd.course_id IN ({$placeholders})
+            ";
+
+            $prereqs_types = str_repeat('i', count($course_ids));
+            $prereqs_params = $course_ids;
+
+            $prereqs_stmt = $conn->prepare($prereqs_sql);
+            if (!$prereqs_stmt) {
+                error_log("Prepare statement for prerequisites failed: " . $conn->error);
+            } else {
+                call_user_func_array([$prereqs_stmt, 'bind_param'], refValues(array_merge([$prereqs_types], $prereqs_params)));
+                $prereqs_stmt->execute();
+                $prereqs_result = $prereqs_stmt->get_result();
+
+                while ($prereq_row = $prereqs_result->fetch_assoc()) {
+                    if (isset($courses[$prereq_row['course_id']])) {
+                        $courses[$prereq_row['course_id']]['prerequisites'][] = [
+                            'id' => $prereq_row['id'],
+                            'course_name' => $prereq_row['course_name'],
+                            'course_code' => $prereq_row['course_code']
+                        ];
+                    }
+                }
+                $prereqs_stmt->close();
+            }
+        }
+    }
+
+    $conn->close();
+    return array_values($courses); // Return as a simple indexed array
+}
+
 ?>
