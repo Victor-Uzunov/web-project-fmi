@@ -23,11 +23,6 @@
             <input type="hidden" name="course_code" id="edit_course_code">
 
             <div>
-                <label for="edit_course_code" class="block text-sm font-medium text-gray-700">Course Code:</label>
-                <input type="text" id="edit_course_code" name="course_code" required
-                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-            <div>
                 <label for="edit_course_name" class="block text-sm font-medium text-gray-700">Course Name:</label>
                 <input type="text" id="edit_course_name" name="course_name" required
                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
