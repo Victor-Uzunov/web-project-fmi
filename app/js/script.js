@@ -1,0 +1,57 @@
+// app/js/script.js
+
+// Function to open the edit course modal and populate its fields
+function openEditModal(course) {
+    const modal = document.getElementById('editCourseModal');
+    const form = document.getElementById('editCourseForm');
+    const prerequisiteSelect = document.getElementById('edit_prerequisites');
+
+    // Populate form fields with existing course data
+    document.getElementById('edit_course_id').value = course.id;
+    document.getElementById('edit_course_code').value = course.course_code;
+    document.getElementById('edit_course_name').value = course.course_name;
+    document.getElementById('edit_credits').value = course.credits;
+    document.getElementById('edit_department').value = course.department;
+
+    // Clear previous selections in the prerequisites dropdown
+    for (let i = 0; i < prerequisiteSelect.options.length; i++) {
+        prerequisiteSelect.options[i].selected = false;
+    }
+
+    // Select current prerequisites for this course in the dropdown
+    if (course.prerequisites && Array.isArray(course.prerequisites) && course.prerequisites.length > 0) {
+        // Map current prerequisites to an array of their IDs (as strings for comparison with option values)
+        const currentPrerequisiteIds = course.prerequisites.map(p => String(p.id));
+
+        for (let i = 0; i < prerequisiteSelect.options.length; i++) {
+            // If the option's value (prerequisite course ID) is in the currentPrerequisiteIds array, select it
+            if (currentPrerequisiteIds.includes(prerequisiteSelect.options[i].value)) {
+                prerequisiteSelect.options[i].selected = true;
+            }
+        }
+    }
+
+    // Display the modal
+    modal.classList.remove('hidden');
+    modal.classList.add('flex'); // Use flex for centering with Tailwind
+}
+
+// Function to close the edit course modal
+function closeEditModal() {
+    const modal = document.getElementById('editCourseModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+// Close modal when clicking outside (optional, but good UX)
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('editCourseModal');
+    if (modal) {
+        modal.addEventListener('click', (event) => {
+            // Check if the click was directly on the modal backdrop, not inside the modal content
+            if (event.target === modal) {
+                closeEditModal();
+            }
+        });
+    }
+});

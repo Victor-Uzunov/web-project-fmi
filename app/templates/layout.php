@@ -44,5 +44,7 @@ require_once __DIR__ . '/../auth.php';
         </main>
     </div>
 
+    <!-- Include JavaScript for modal functionality -->
+    <script src="js/script.js"></script>
 </body>
 </html>
