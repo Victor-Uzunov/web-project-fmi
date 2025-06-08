@@ -23,8 +23,7 @@ require_once __DIR__ . '/../auth.php';
     </style>
 </head>
 <body class="p-8">
-    <!-- Changed max-w-4xl to max-w-6xl for a wider main content area -->
-    <div class="container mx-auto max-w-6xl bg-white rounded-lg shadow-xl p-8">
+    <div class="container mx-auto max-w-7xl bg-white rounded-lg shadow-xl p-8">
         <header class="flex justify-between items-center mb-8 rounded-md bg-indigo-100 p-4">
             <h1 class="text-4xl font-bold text-indigo-700">University Course Manager</h1>
             <?php if (isLoggedIn()): // Use the helper function ?>
