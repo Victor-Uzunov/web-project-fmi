@@ -1,0 +1,35 @@
+name: PHP CI Checks
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  push:
+    branches: [ "main" ]
+
+jobs:
+  php-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        extensions: mysqli, pdo_mysql
+        tools: composer
+
+    - name: Validate Composer files
+      run: composer validate --strict
+
+    - name: Install Composer dependencies
+      run: composer install --no-dev --prefer-dist
+
+    - name: Run PHP Syntax Check (Linting)
+      run: |
+        find app/ -name "*.php" -print0 | xargs -0 -n1 php -l
+
+    - name: Display PHP Info (Optional for Debugging)
+      run: php -i

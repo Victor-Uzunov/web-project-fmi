@@ -11,10 +11,10 @@
 <!-- Bullet-point summary of key changes -->
 
 - [ ] PHP backend logic
+- [ ] Bug fix
 - [ ] MySQL queries/migrations
 - [ ] HTML/CSS/JS frontend
 - [ ] Docker Compose configuration
-- [ ] Tests or seed data
 
 ---
 
