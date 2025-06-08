@@ -19,6 +19,21 @@ require_once __DIR__ . '/../auth.php';
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6;
+            position: relative;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(124, 58, 237, 0.1) 50%, rgba(236, 72, 153, 0.1) 100%),
+                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            z-index: -1;
         }
         .header-gradient {
             background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #EC4899 100%);
@@ -30,9 +45,68 @@ require_once __DIR__ . '/../auth.php';
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
+        .container {
+            position: relative;
+            z-index: 1;
+        }
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.1) 0%, rgba(79, 70, 229, 0) 70%);
+            border-radius: 50%;
+            z-index: -1;
+        }
+        .container::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: -20px;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.1) 0%, rgba(236, 72, 153, 0) 70%);
+            border-radius: 50%;
+            z-index: -1;
+        }
+        .decorative-circle {
+            position: fixed;
+            border-radius: 50%;
+            opacity: 0.1;
+            z-index: -1;
+        }
+        .circle-1 {
+            top: 10%;
+            left: 5%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, #4F46E5 0%, transparent 70%);
+        }
+        .circle-2 {
+            bottom: 10%;
+            right: 5%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, #EC4899 0%, transparent 70%);
+        }
+        .circle-3 {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, #7C3AED 0%, transparent 70%);
+        }
     </style>
 </head>
 <body class="p-8">
+    <!-- Decorative circles -->
+    <div class="decorative-circle circle-1"></div>
+    <div class="decorative-circle circle-2"></div>
+    <div class="decorative-circle circle-3"></div>
+
     <div class="container mx-auto max-w-7xl bg-white rounded-lg shadow-xl p-8">
         <header class="flex justify-between items-center mb-8 rounded-md header-gradient p-6">
             <h1 class="text-4xl font-bold text-white">University Course Manager</h1>
