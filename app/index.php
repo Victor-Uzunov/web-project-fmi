@@ -127,8 +127,8 @@ $filter_department = trim($_GET['filter_department'] ?? '');
 $prereq_search_term = trim($_GET['prereq_search_term'] ?? ''); // Used for AJAX/JS filtering of prerequisites
 
 // --- Fetch Data for Display and Forms ---
-// Pass both current user ID and system user ID to fetch all relevant courses
-$courses = getAllCoursesForUser($current_user_id, $system_user_id, $search_name, $filter_department);
+// Get only manually added courses for the current user
+$courses = getManuallyAddedCourses($current_user_id, $search_name, $filter_department);
 
 // Fetch all available courses (current user's and global) that can be selected as prerequisites
 $all_available_courses = getAllAvailableCoursesForPrerequisites($current_user_id, $system_user_id);

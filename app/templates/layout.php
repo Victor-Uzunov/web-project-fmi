@@ -29,6 +29,7 @@ require_once __DIR__ . '/../auth.php';
             <?php if (isLoggedIn()): // Use the helper function ?>
                 <div class="text-lg text-gray-700 flex items-center">
                     <a href="index.php" class="text-indigo-600 hover:text-indigo-800 mr-4">My Courses</a>
+                    <a href="all_courses.php" class="text-indigo-600 hover:text-indigo-800 mr-4">All Courses</a>
                     <a href="graph.php" class="text-indigo-600 hover:text-indigo-800 mr-4">Course Graph</a>
                     <span>Welcome, <span class="font-semibold text-indigo-800"><?php echo htmlspecialchars($_SESSION['username']); ?></span>!</span>
                     <form action="index.php" method="post" class="ml-4">
