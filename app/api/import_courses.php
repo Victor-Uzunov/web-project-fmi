@@ -17,7 +17,21 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_FILES['csvFile'])) {
     exit();
 }
 
+// Get the source of the import request
+$source = isset($_POST['source']) ? $_POST['source'] : 'user';
 $user_id = $_SESSION['user_id'];
+
+// If importing from all_courses.php, use system user ID for global visibility
+if ($source === 'global') {
+    $system_user_id = getUserIdByUsername(SYSTEM_USERNAME);
+    if ($system_user_id === null) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Server Error', 'message' => 'System user not found.']);
+        exit();
+    }
+    $user_id = $system_user_id;
+}
+
 $file = $_FILES['csvFile'];
 
 // Validate file type
@@ -113,5 +127,5 @@ echo json_encode([
         count($results['errors'])
     ),
     'details' => $results,
-    'redirect' => '/courses'
+    'source' => $source // Include the source in the response
 ]); 

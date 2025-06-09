@@ -171,7 +171,7 @@ require_once __DIR__ . '/../auth.php';
                         </svg>
                         Import
                     </button>
-                    <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleCSVUpload(this.files[0])">
+                    <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleCSVUpload(this.files[0], window.location.pathname.includes('all_courses.php') ? 'global' : 'user')">
                 <?php else: ?>
                     <a href="<?php echo $courses_link; ?>" 
                         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -253,11 +253,12 @@ require_once __DIR__ . '/../auth.php';
         }
     </script>
     <script>
-    function handleCSVUpload(file) {
+    function handleCSVUpload(file, source = 'user') {
         if (!file) return;
 
         const formData = new FormData();
         formData.append('csvFile', file);
+        formData.append('source', source);
 
         // Show loading state
         const modal = document.getElementById('importResultsModal');
@@ -356,8 +357,12 @@ require_once __DIR__ . '/../auth.php';
         modal.classList.remove('flex');
         // Clear the file input
         document.getElementById('csvFileInput').value = '';
-        // Redirect to all available courses view
-        window.location.href = '/all_courses.php';
+        // Redirect based on the current page
+        if (window.location.pathname.includes('all_courses.php')) {
+            window.location.href = '/all_courses.php';
+        } else {
+            window.location.href = '/index.php';
+        }
     }
     </script>
 </body>
