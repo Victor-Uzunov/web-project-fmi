@@ -290,8 +290,9 @@ require_once __DIR__ . '/../auth.php';
                     </div>
                 `;
             } else {
+                // Show success message
                 html = `
-                    <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-4">
+                    <div class="bg-green-50 border-l-4 border-green-400 p-4">
                         <div class="flex">
                             <div class="flex-shrink-0">
                                 <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -305,9 +306,10 @@ require_once __DIR__ . '/../auth.php';
                     </div>
                 `;
 
+                // Show any errors that occurred during import
                 if (data.details.errors.length > 0) {
                     html += `
-                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mt-4">
                             <div class="flex">
                                 <div class="flex-shrink-0">
                                     <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -354,6 +356,8 @@ require_once __DIR__ . '/../auth.php';
         modal.classList.remove('flex');
         // Clear the file input
         document.getElementById('csvFileInput').value = '';
+        // Redirect to all available courses view
+        window.location.href = '/all_courses.php';
     }
     </script>
 </body>

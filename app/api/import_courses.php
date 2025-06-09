@@ -112,5 +112,6 @@ echo json_encode([
         count($results['success']),
         count($results['errors'])
     ),
-    'details' => $results
+    'details' => $results,
+    'redirect' => '/courses'
 ]); 
