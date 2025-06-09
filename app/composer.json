@@ -1,0 +1,36 @@
+{
+    "name": "victor-and-petar/university-course-manager",
+    "description": "A simple university course manager application using PHP, MySQL, and Docker Compose.",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Victor Uzunov",
+            "email": "uzunovvictor@gmail.com"
+        },
+        {
+            "name": "Petar Kirilov",
+            "email": "petar.kirilov17@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.1.0"
+    },
+    "autoload": {
+        "files": [
+            "config.php",
+            "auth.php",
+            "course_manager.php"
+        ]
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "platform": {
+            "php": "8.1"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
