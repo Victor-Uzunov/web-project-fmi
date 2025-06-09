@@ -81,7 +81,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
     <div class="container mx-auto max-w-md bg-white rounded-lg shadow-xl p-8">
         <h1 class="text-3xl font-bold text-center text-indigo-700 mb-6">Welcome to Course Manager</h1>
 
-        <?php echo $message;
+        <?php echo $message;?>
 
         <div class="mb-8 p-6 bg-blue-50 rounded-lg shadow-sm">
             <h2 class="text-2xl font-semibold text-blue-700 mb-4">Login</h2>
