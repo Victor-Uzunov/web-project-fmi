@@ -1,9 +1,7 @@
 <?php
 // app/templates/layout.php
 
-// Corrected path to config.php - it's in the parent directory of 'templates'
 require_once __DIR__ . '/../config.php';
-// Corrected path to auth.php - also in the parent directory of 'templates'
 require_once __DIR__ . '/../auth.php';
 
 ?>
@@ -129,14 +127,11 @@ require_once __DIR__ . '/../auth.php';
         <nav class="mb-8 bg-white rounded-lg shadow-sm p-4">
             <div class="flex space-x-4">
                 <?php
-                // Get the current page name
                 $current_page = basename($_SERVER['PHP_SELF']);
                 
-                // Determine which view we're in
                 $is_courses_view = in_array($current_page, ['index.php', 'all_courses.php']);
                 $is_graph_view = in_array($current_page, ['my_courses_graph.php', 'all_courses_graph.php']);
                 
-                // Set up the alternative view links
                 if ($is_courses_view) {
                     $alternative_link = $current_page === 'index.php' ? 'all_courses.php' : 'index.php';
                     $alternative_view = $current_page === 'index.php' ? 'All Courses' : 'My Courses';
@@ -190,7 +185,6 @@ require_once __DIR__ . '/../auth.php';
     <!-- Include JavaScript for modal functionality -->
     <script src="js/script.js"></script>
     <script>
-        // Close dropdowns when clicking outside
         document.addEventListener('click', function(event) {
             const dropdowns = document.querySelectorAll('[id$="Dropdown"]');
             dropdowns.forEach(dropdown => {
@@ -200,19 +194,16 @@ require_once __DIR__ . '/../auth.php';
             });
         });
 
-        // Toggle dropdown visibility
         function toggleDropdown(dropdownId) {
             const dropdown = document.getElementById(dropdownId);
             const allDropdowns = document.querySelectorAll('[id$="Dropdown"]');
             
-            // Close all other dropdowns
             allDropdowns.forEach(d => {
                 if (d.id !== dropdownId) {
                     d.classList.add('hidden');
                 }
             });
             
-            // Toggle the clicked dropdown
             dropdown.classList.toggle('hidden');
         }
     </script>

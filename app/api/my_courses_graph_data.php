@@ -3,7 +3,6 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../auth.php';
 require_once __DIR__ . '/../course_manager.php';
 
-// Ensure user is logged in
 if (!isLoggedIn()) {
     http_response_code(401);
     echo json_encode(['error' => 'Unauthorized', 'message' => 'Please log in to view the graph.']);
@@ -12,7 +11,6 @@ if (!isLoggedIn()) {
 
 $user_id = $_SESSION['user_id'];
 
-// Fetch only manually added courses for the current user
 $courses_data = getManuallyAddedCourses($user_id);
 
 $nodes = [];
@@ -22,10 +20,9 @@ foreach ($courses_data as $course) {
     // Add course as a node
     $nodes[] = [
         'id' => $course['id'],
-        'label' => htmlspecialchars($course['course_name']), // Display course name as main label
-        'title' => htmlspecialchars($course['course_name'] . ' (' . $course['course_code'] . ') - ' . $course['department'] . ' - ' . $course['credits'] . ' Credits'), // More details on hover
-        'group' => htmlspecialchars($course['department']), // Group by department for potential coloring
-        // Explicit data for click details in JavaScript
+        'label' => htmlspecialchars($course['course_name']),
+        'title' => htmlspecialchars($course['course_name'] . ' (' . $course['course_code'] . ') - ' . $course['department'] . ' - ' . $course['credits'] . ' Credits'),
+        'group' => htmlspecialchars($course['department']),
         'courseCode' => htmlspecialchars($course['course_code']),
         'courseName' => htmlspecialchars($course['course_name']),
         'department' => htmlspecialchars($course['department']),

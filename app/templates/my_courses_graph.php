@@ -40,7 +40,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const container = document.getElementById('network-container');
     const loadingMessage = document.getElementById('loadingMessage');
 
-    // Fetch graph data from our API endpoint
     fetch('api/my_courses_graph_data.php')
         .then(response => {
             if (!response.ok) {
@@ -52,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(data => {
-            if (loadingMessage) loadingMessage.style.display = 'none'; // Hide loading message
+            if (loadingMessage) loadingMessage.style.display = 'none';
 
             if (data.error) {
                 if (loadingMessage) {
@@ -72,17 +71,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Create a DataSet for nodes and edges
             const nodes = new vis.DataSet(data.nodes);
             const edges = new vis.DataSet(data.edges);
 
-            // Provide the data to the Network
             const graphData = {
                 nodes: nodes,
                 edges: edges
             };
 
-            // Configure the network options
             const options = {
                 physics: {
                     enabled: true,
@@ -148,10 +144,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             };
 
-            // Initialize the Network
             const network = new vis.Network(container, graphData, options);
 
-            // Add a click event listener for nodes
             network.on("click", function (params) {
                 if (params.nodes.length > 0) {
                     const nodeId = params.nodes[0];
@@ -172,7 +166,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 });
 
-// Modal functions
 function openCourseDetailsModal(node) {
     document.getElementById('modalCourseName').textContent = node.courseName;
     document.getElementById('modalCourseCode').textContent = node.courseCode;

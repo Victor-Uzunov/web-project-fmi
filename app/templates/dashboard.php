@@ -9,11 +9,9 @@
 // $current_search_name
 // $current_filter_department
 
-// Include the add course form template
-// Pass necessary variables to it
 $message = $message_for_form;
-$prerequisites_options = $prerequisite_options; // for add form's prereq dropdown
-$departments_enum = $departments_enum; // for add form's department dropdown
+$prerequisites_options = $prerequisite_options;
+$departments_enum = $departments_enum;
 include __DIR__ . '/add_course_form.php';
 
 // --- Course Search and Filter Form ---
@@ -55,16 +53,12 @@ include __DIR__ . '/add_course_form.php';
 </div>
 
 <?php
-// Include the course list template
-// Pass necessary variables to it
 $courses = $courses_to_display;
-$message = $message_for_form; // Re-use message variable name expected by list template
+$message = $message_for_form;
 include __DIR__ . '/course_list.php';
 
-// Include the edit course modal template
-// Pass necessary variables to it
-$prerequisites_options = $prerequisite_options; // for edit modal's prereq dropdown
-$departments_enum = $departments_enum; // for edit modal's department dropdown
+$prerequisites_options = $prerequisite_options;
+$departments_enum = $departments_enum;
 include __DIR__ . '/modals/edit_course_modal.php';
 
 ?>

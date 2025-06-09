@@ -43,14 +43,12 @@
         const container = document.getElementById('network-container');
         const courseDetailsModal = document.getElementById('courseDetailsModal');
 
-        // Check if the container element exists
         if (!container) {
             console.error("Network container not found!");
             if (loadingMessage) loadingMessage.textContent = "Error: Graph container not found.";
             return;
         }
 
-        // Function to open course details modal
         window.openCourseDetailsModal = function(nodeData) {
             document.getElementById('modalCourseName').textContent = nodeData.courseName;
             document.getElementById('modalCourseCode').textContent = nodeData.courseCode;
@@ -60,13 +58,11 @@
             courseDetailsModal.classList.add('flex');
         };
 
-        // Function to close course details modal
         window.closeCourseDetailsModal = function() {
             courseDetailsModal.classList.add('hidden');
             courseDetailsModal.classList.remove('flex');
         };
 
-        // Close modal when clicking outside
         if (courseDetailsModal) {
             courseDetailsModal.addEventListener('click', (event) => {
                 if (event.target === courseDetailsModal) {
@@ -75,8 +71,6 @@
             });
         }
 
-
-        // Fetch graph data from our API endpoint
         fetch('api/courses_graph_data.php')
             .then(response => {
                 if (!response.ok) {
@@ -88,14 +82,13 @@
                 return response.json();
             })
             .then(data => {
-                if (loadingMessage) loadingMessage.style.display = 'none'; // Hide loading message
+                if (loadingMessage) loadingMessage.style.display = 'none';
 
                 if (data.error) {
                     if (loadingMessage) {
                         loadingMessage.style.display = 'block';
                         loadingMessage.textContent = 'Error loading graph: ' + data.message;
                     } else {
-                        // Using alert here for critical errors, as the modal might not be available yet.
                         alert('Error: ' + data.message);
                     }
                     return;
@@ -109,27 +102,23 @@
                     return;
                 }
 
-                // Create a DataSet for nodes and edges
                 const nodes = new vis.DataSet(data.nodes);
                 const edges = new vis.DataSet(data.edges);
 
-                // Provide the data to the Network
                 const graphData = {
                     nodes: nodes,
                     edges: edges
                 };
 
-                // Define options for the network visualization
                 const options = {
                     physics: {
                         enabled: true,
-                        // Explicitly define barnesHut and increase springLength
                         solver: 'barnesHut',
                         barnesHut: {
                             gravitationalConstant: -2000,
                             centralGravity: 0.3,
-                            springLength: 200, // Increased from default (e.g., 95 or 100)
-                            springConstant: 0.05, // Slightly adjusted for better spread with longer springs
+                            springLength: 200,
+                            springConstant: 0.05,
                             damping: 0.09,
                             avoidOverlap: 0
                         },
@@ -148,7 +137,7 @@
                         }
                     },
                     nodes: {
-                        shape: 'box', // or 'dot', 'ellipse', 'circle', 'text'
+                        shape: 'box',
                         size: 20,
                         font: {
                             size: 14,
@@ -169,7 +158,6 @@
                         }
                     },
                     groups: {
-                        // Define colors for different departments
                         'Mathematics': { color: { background: '#A7F3D0', border: '#10B981' } }, // Green
                         'Software Technologies': { color: { background: '#BFDBFE', border: '#3B82F6' } }, // Blue
                         'Informatics': { color: { background: '#FDE68A', border: '#F59E0B' } }, // Yellow
@@ -187,14 +175,12 @@
                     }
                 };
 
-                // Initialize the Network
                 const network = new vis.Network(container, graphData, options);
 
-                // Add a click event listener for nodes
                 network.on("click", function (params) {
                     if (params.nodes.length > 0) {
                         const nodeId = params.nodes[0];
-                        const clickedNode = nodes.get(nodeId); // Get the full node data from the DataSet
+                        const clickedNode = nodes.get(nodeId);
                         if (clickedNode) {
                             openCourseDetailsModal(clickedNode);
                         }

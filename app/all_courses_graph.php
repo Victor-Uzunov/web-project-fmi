@@ -16,10 +16,8 @@ if ($system_user_id === null) {
     die("System user not found. Please contact support.");
 }
 
-// --- Template Rendering ---
 $title = "All Courses Graph";
 $content_template_path = __DIR__ . '/templates/all_courses_graph.php';
 
-// Render the main layout
 include __DIR__ . '/templates/layout.php';
 ?> 

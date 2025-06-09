@@ -1,4 +1,5 @@
 <?php
+// app/course_manager.php
 
 require_once __DIR__ . '/config.php';
 
@@ -241,12 +242,10 @@ function getAllCoursesForUser($user_id, $system_user_id, $search_query = '', $de
     $conn = getDbConnection();
     $courses = [];
 
-    // Build the base SQL query to include courses for both current user AND system user
     $sql = "SELECT id, course_code, course_name, credits, department, user_id FROM courses WHERE (user_id = ? OR user_id = ?)";
     $params = [$user_id, $system_user_id];
     $types = "ii";
 
-    // Add search filter for course name or code
     if (!empty($search_query)) {
         $sql .= " AND (course_name LIKE ? OR course_code LIKE ?)";
         $search_term = '%' . $search_query . '%';
@@ -255,7 +254,6 @@ function getAllCoursesForUser($user_id, $system_user_id, $search_query = '', $de
         $types .= "ss";
     }
 
-    // Add department filter
     if (!empty($department_filter) && in_array($department_filter, DEPARTMENTS)) {
         $sql .= " AND department = ?";
         $params[] = $department_filter;
@@ -271,7 +269,6 @@ function getAllCoursesForUser($user_id, $system_user_id, $search_query = '', $de
         return [];
     }
 
-    // Use call_user_func_array for dynamic bind_param
     $bind_params = array_merge([$types], $params);
     call_user_func_array([$stmt, 'bind_param'], refValues($bind_params));
     $stmt->execute();
@@ -283,7 +280,6 @@ function getAllCoursesForUser($user_id, $system_user_id, $search_query = '', $de
     }
     $stmt->close();
 
-    // Fetch all dependencies for this user's courses AND global courses
     if (!empty($courses)) {
         $course_ids = array_keys($courses);
         if (!empty($course_ids)) {
@@ -378,7 +374,6 @@ function getAllAvailableCoursesForPrerequisites($user_id, $system_user_id, $excl
         return [];
     }
 
-    // Use call_user_func_array for dynamic bind_param
     $bind_params = array_merge([$types], $params);
     call_user_func_array([$stmt, 'bind_param'], refValues($bind_params));
     $stmt->execute();
@@ -405,12 +400,10 @@ function getManuallyAddedCourses($user_id, $search_query = '', $department_filte
     $conn = getDbConnection();
     $courses = [];
 
-    // Build the base SQL query to include only user's manually added courses
     $sql = "SELECT id, course_code, course_name, credits, department, user_id FROM courses WHERE user_id = ?";
     $params = [$user_id];
     $types = "i";
 
-    // Add search filter for course name or code
     if (!empty($search_query)) {
         $sql .= " AND (course_name LIKE ? OR course_code LIKE ?)";
         $search_term = '%' . $search_query . '%';
@@ -419,7 +412,6 @@ function getManuallyAddedCourses($user_id, $search_query = '', $department_filte
         $types .= "ss";
     }
 
-    // Add department filter
     if (!empty($department_filter) && in_array($department_filter, DEPARTMENTS)) {
         $sql .= " AND department = ?";
         $params[] = $department_filter;
@@ -435,7 +427,6 @@ function getManuallyAddedCourses($user_id, $search_query = '', $department_filte
         return [];
     }
 
-    // Use call_user_func_array for dynamic bind_param
     $bind_params = array_merge([$types], $params);
     call_user_func_array([$stmt, 'bind_param'], refValues($bind_params));
     $stmt->execute();
@@ -447,7 +438,6 @@ function getManuallyAddedCourses($user_id, $search_query = '', $department_filte
     }
     $stmt->close();
 
-    // Fetch all dependencies for this user's courses
     if (!empty($courses)) {
         $course_ids = array_keys($courses);
         if (!empty($course_ids)) {
