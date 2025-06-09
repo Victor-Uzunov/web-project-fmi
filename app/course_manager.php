@@ -12,9 +12,10 @@ require_once __DIR__ . '/config.php'; // For getDbConnection() and DEPARTMENTS, 
  * @param int    $credits       The number of credits for the course.
  * @param string $department    The department the course belongs to.
  * @param array  $prerequisite_codes An array of course codes that are prerequisites.
+ * @param string $source_type   The type of source ('system', 'imported', or 'added').
  * @return array An associative array with 'success' (bool) and 'message' (string).
  */
-function addCourse($user_id, $course_code, $course_name, $credits, $department, $prerequisite_codes = []) {
+function addCourse($user_id, $course_code, $course_name, $credits, $department, $prerequisite_codes = [], $source_type = 'added') {
     $conn = getDbConnection();
     $conn->begin_transaction(); // Start transaction for atomicity
 
@@ -25,15 +26,15 @@ function addCourse($user_id, $course_code, $course_name, $credits, $department, 
         }
 
         // 1. Insert the new course
-        $stmt = $conn->prepare("INSERT INTO courses (user_id, course_code, course_name, credits, department) VALUES (?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO courses (user_id, course_code, course_name, credits, department, source_type) VALUES (?, ?, ?, ?, ?, ?)");
         if (!$stmt) {
             throw new Exception("Prepare failed: " . $conn->error);
         }
-        $stmt->bind_param("issis", $user_id, $course_code, $course_name, $credits, $department);
+        $stmt->bind_param("ississ", $user_id, $course_code, $course_name, $credits, $department, $source_type);
         if (!$stmt->execute()) {
             // Check for unique constraint violation (user_id, course_code)
             if ($conn->errno == 1062) {
-                throw new Exception("A course with code '{$course_code}' already exists for your account.");
+                throw new Exception("A course with code '{$course_code}' already exists in your account.");
             }
             throw new Exception("Error adding course: " . $stmt->error);
         }
@@ -47,19 +48,44 @@ function addCourse($user_id, $course_code, $course_name, $credits, $department, 
             });
 
             if (!empty($prerequisite_codes)) {
-                $insert_prereq_sql = "INSERT INTO course_dependencies (course_code, prerequisite_course_code) VALUES (?, ?)";
+                // Get system user ID
+                $system_user_id = getUserIdByUsername(SYSTEM_USERNAME);
+                
+                // Check if prerequisites exist in either user's courses or system courses
+                $check_prereq_stmt = $conn->prepare("
+                    SELECT course_code, user_id 
+                    FROM courses 
+                    WHERE course_code = ? AND (user_id = ? OR user_id = ?)
+                ");
+                
+                $insert_prereq_sql = "INSERT INTO course_dependencies (course_user_id, course_code, prereq_user_id, prerequisite_course_code) VALUES (?, ?, ?, ?)";
                 $stmt_prereq = $conn->prepare($insert_prereq_sql);
                 if (!$stmt_prereq) {
                     throw new Exception("Prepare prerequisite failed: " . $conn->error);
                 }
 
                 foreach ($prerequisite_codes as $prereq_code) {
-                    $stmt_prereq->bind_param("ss", $course_code, $prereq_code);
+                    // Check if prerequisite exists
+                    $check_prereq_stmt->bind_param("sii", $prereq_code, $user_id, $system_user_id);
+                    $check_prereq_stmt->execute();
+                    $result = $check_prereq_stmt->get_result();
+                    
+                    if ($result->num_rows === 0) {
+                        throw new Exception("Prerequisite course '{$prereq_code}' does not exist in your courses or system courses.");
+                    }
+                    
+                    // Get the actual user_id of the prerequisite course
+                    $prereq_row = $result->fetch_assoc();
+                    $prereq_user_id = $prereq_row['user_id'];
+                    
+                    // Add the dependency using the correct user IDs for both course and prerequisite
+                    $stmt_prereq->bind_param("isis", $user_id, $course_code, $prereq_user_id, $prereq_code);
                     if (!$stmt_prereq->execute()) {
                         error_log("Failed to add prerequisite {$prereq_code} for course {$course_code}: " . $stmt_prereq->error);
                     }
                 }
                 $stmt_prereq->close();
+                $check_prereq_stmt->close();
             }
         }
 
@@ -106,7 +132,7 @@ function updateCourse($course_code, $user_id, $new_course_code, $course_name, $c
         $stmt->bind_param("ssisss", $new_course_code, $course_name, $credits, $department, $course_code, $user_id);
         if (!$stmt->execute()) {
              if ($conn->errno == 1062) { // Unique constraint violation (user_id, course_code)
-                throw new Exception("A course with code '{$new_course_code}' already exists for your account.");
+                throw new Exception("A course with code '{$new_course_code}' already exists in your account.");
             }
             throw new Exception("Error updating course details: " . $stmt->error);
         }
@@ -114,11 +140,11 @@ function updateCourse($course_code, $user_id, $new_course_code, $course_name, $c
 
         // 2. Update prerequisites
         // Clear existing prerequisites for this course first
-        $stmt_delete_prereqs = $conn->prepare("DELETE FROM course_dependencies WHERE course_code = ?");
+        $stmt_delete_prereqs = $conn->prepare("DELETE FROM course_dependencies WHERE course_code = ? AND course_user_id = ?");
         if (!$stmt_delete_prereqs) {
             throw new Exception("Prepare delete prerequisites failed: " . $conn->error);
         }
-        $stmt_delete_prereqs->bind_param("s", $course_code);
+        $stmt_delete_prereqs->bind_param("si", $course_code, $user_id);
         if (!$stmt_delete_prereqs->execute()) {
             throw new Exception("Error clearing existing prerequisites: " . $stmt_delete_prereqs->error);
         }
@@ -132,19 +158,44 @@ function updateCourse($course_code, $user_id, $new_course_code, $course_name, $c
             });
 
             if (!empty($prerequisite_codes)) {
-                $insert_prereq_sql = "INSERT INTO course_dependencies (course_code, prerequisite_course_code) VALUES (?, ?)";
+                // Get system user ID for checking prerequisites
+                $system_user_id = getUserIdByUsername(SYSTEM_USERNAME);
+                
+                // Check if prerequisites exist in either user's courses or system courses
+                $check_prereq_stmt = $conn->prepare("
+                    SELECT course_code, user_id 
+                    FROM courses 
+                    WHERE course_code = ? AND (user_id = ? OR user_id = ?)
+                ");
+                
+                $insert_prereq_sql = "INSERT INTO course_dependencies (course_user_id, course_code, prereq_user_id, prerequisite_course_code) VALUES (?, ?, ?, ?)";
                 $stmt_add_prereq = $conn->prepare($insert_prereq_sql);
                 if (!$stmt_add_prereq) {
                     throw new Exception("Prepare add prerequisites failed: " . $conn->error);
                 }
 
                 foreach ($prerequisite_codes as $prereq_code) {
-                    $stmt_add_prereq->bind_param("ss", $new_course_code, $prereq_code);
+                    // Check if prerequisite exists
+                    $check_prereq_stmt->bind_param("sii", $prereq_code, $user_id, $system_user_id);
+                    $check_prereq_stmt->execute();
+                    $result = $check_prereq_stmt->get_result();
+                    
+                    if ($result->num_rows === 0) {
+                        throw new Exception("Prerequisite course '{$prereq_code}' does not exist in your courses or system courses.");
+                    }
+                    
+                    // Get the actual user_id of the prerequisite course
+                    $prereq_row = $result->fetch_assoc();
+                    $prereq_user_id = $prereq_row['user_id'];
+                    
+                    // Add the dependency using the correct user IDs for both course and prerequisite
+                    $stmt_add_prereq->bind_param("isis", $user_id, $new_course_code, $prereq_user_id, $prereq_code);
                     if (!$stmt_add_prereq->execute()) {
-                         error_log("Failed to add prerequisite {$prereq_code} for course {$new_course_code}: " . $stmt_add_prereq->error);
+                        error_log("Failed to add prerequisite {$prereq_code} for course {$new_course_code}: " . $stmt_add_prereq->error);
                     }
                 }
                 $stmt_add_prereq->close();
+                $check_prereq_stmt->close();
             }
         }
 
@@ -238,11 +289,10 @@ function getCourseByCode($course_code, $user_id) {
         $prereqs_stmt = $conn->prepare("
             SELECT cd.prerequisite_course_code AS course_code, c.course_name
             FROM course_dependencies cd
-            JOIN courses c ON cd.prerequisite_course_code = c.course_code
-            WHERE cd.course_code = ? AND (c.user_id = ? OR c.user_id = ?) -- Allow global prereqs
+            JOIN courses c ON cd.prerequisite_course_code = c.course_code AND cd.user_id = c.user_id
+            WHERE cd.course_code = ? AND cd.user_id = ?
         ");
-        $system_user_id = getUserIdByUsername(SYSTEM_USERNAME); // Fetch system ID
-        $prereqs_stmt->bind_param("sii", $course_code, $user_id, $system_user_id);
+        $prereqs_stmt->bind_param("si", $course_code, $user_id);
         $prereqs_stmt->execute();
         $prereqs_result = $prereqs_stmt->get_result();
 
@@ -269,90 +319,61 @@ function getCourseByCode($course_code, $user_id) {
  * @param string $department_filter Optional department to filter by.
  * @return array An array of course data, each with a 'prerequisites' sub-array.
  */
-function getAllCoursesForUser($user_id, $system_user_id, $search_query = '', $department_filter = '') {
+function getAllCoursesForUser($user_id, $system_user_id, $search = '', $department = '') {
     $conn = getDbConnection();
-    $courses = [];
-
-    // Build the base SQL query to include courses for both current user AND system user
-    $sql = "SELECT course_code, course_name, credits, department, user_id FROM courses WHERE (user_id = ? OR user_id = ?)";
+    
+    // Base query to get all courses (both user's and system's)
+    $query = "
+        SELECT c.*, 
+               GROUP_CONCAT(DISTINCT cd.prerequisite_course_code) as prerequisites
+        FROM courses c
+        LEFT JOIN course_dependencies cd ON c.user_id = cd.course_user_id AND c.course_code = cd.course_code
+        WHERE (c.user_id = ? OR c.user_id = ?)
+    ";
+    
     $params = [$user_id, $system_user_id];
     $types = "ii";
-
-    // Add search filter for course name or code
-    if (!empty($search_query)) {
-        $sql .= " AND (course_name LIKE ? OR course_code LIKE ?)";
-        $search_term = '%' . $search_query . '%';
-        $params[] = $search_term;
-        $params[] = $search_term;
+    
+    // Add search condition if provided
+    if (!empty($search)) {
+        $query .= " AND (c.course_code LIKE ? OR c.course_name LIKE ?)";
+        $search_param = "%{$search}%";
+        $params[] = $search_param;
+        $params[] = $search_param;
         $types .= "ss";
     }
-
-    // Add department filter
-    if (!empty($department_filter) && in_array($department_filter, DEPARTMENTS)) {
-        $sql .= " AND department = ?";
-        $params[] = $department_filter;
+    
+    // Add department filter if provided
+    if (!empty($department)) {
+        $query .= " AND c.department = ?";
+        $params[] = $department;
         $types .= "s";
     }
-
-    $sql .= " ORDER BY created_at DESC";
-
-    $stmt = $conn->prepare($sql);
+    
+    // Group by to handle multiple prerequisites and order by created_at
+    $query .= " GROUP BY c.user_id, c.course_code ORDER BY c.created_at DESC";
+    
+    $stmt = $conn->prepare($query);
     if (!$stmt) {
-        error_log("Prepare statement for getAllCoursesForUser failed: " . $conn->error);
-        $conn->close();
+        error_log("Prepare failed: " . $conn->error);
         return [];
     }
-
-    // Use call_user_func_array for dynamic bind_param
-    $bind_params = array_merge([$types], $params);
-    call_user_func_array([$stmt, 'bind_param'], refValues($bind_params));
+    
+    $stmt->bind_param($types, ...$params);
     $stmt->execute();
     $result = $stmt->get_result();
-
-    while($row = $result->fetch_assoc()) {
-        $courses[$row['course_code']] = $row; // Use course_code as key for easy lookup
-        $courses[$row['course_code']]['prerequisites'] = []; // Initialize prerequisites array
+    
+    $courses = [];
+    while ($row = $result->fetch_assoc()) {
+        // Convert prerequisites string to array
+        $row['prerequisites'] = $row['prerequisites'] ? explode(',', $row['prerequisites']) : [];
+        $courses[] = $row;
     }
+    
     $stmt->close();
-
-    // Fetch all dependencies for this user's courses AND global courses
-    if (!empty($courses)) {
-        $course_codes = array_keys($courses);
-        if (!empty($course_codes)) {
-            $placeholders = implode(',', array_fill(0, count($course_codes), '?'));
-            $prereqs_sql = "
-                SELECT cd.course_code, cd.prerequisite_course_code, c.course_name
-                FROM course_dependencies cd
-                JOIN courses c ON cd.prerequisite_course_code = c.course_code
-                WHERE cd.course_code IN ({$placeholders}) AND (c.user_id = ? OR c.user_id = ?)
-            ";
-
-            $prereqs_types = str_repeat('s', count($course_codes)) . 'ii';
-            $prereqs_params = array_merge($course_codes, [$user_id, $system_user_id]);
-
-            $prereqs_stmt = $conn->prepare($prereqs_sql);
-            if (!$prereqs_stmt) {
-                error_log("Prepare statement for prerequisites failed: " . $conn->error);
-            } else {
-                call_user_func_array([$prereqs_stmt, 'bind_param'], refValues(array_merge([$prereqs_types], $prereqs_params)));
-                $prereqs_stmt->execute();
-                $prereqs_result = $prereqs_stmt->get_result();
-
-                while ($prereq_row = $prereqs_result->fetch_assoc()) {
-                    if (isset($courses[$prereq_row['course_code']])) {
-                        $courses[$prereq_row['course_code']]['prerequisites'][] = [
-                            'course_code' => $prereq_row['prerequisite_course_code'],
-                            'course_name' => $prereq_row['course_name']
-                        ];
-                    }
-                }
-                $prereqs_stmt->close();
-            }
-        }
-    }
-
     $conn->close();
-    return array_values($courses); // Return as a simple indexed array
+    
+    return $courses;
 }
 
 /**
@@ -441,7 +462,7 @@ function getManuallyAddedCourses($user_id, $search_query = '', $department_filte
 
     // Build the base SQL query to include only user's manually added courses
     // Only show courses that the user owns (user_id = ?)
-    $sql = "SELECT course_code, course_name, credits, department, user_id FROM courses WHERE user_id = ?";
+    $sql = "SELECT course_code, course_name, credits, department, user_id, source_type FROM courses WHERE user_id = ?";
     $params = [$user_id];
     $types = "i";
 
@@ -490,12 +511,13 @@ function getManuallyAddedCourses($user_id, $search_query = '', $department_filte
             $prereqs_sql = "
                 SELECT cd.course_code, cd.prerequisite_course_code, c.course_name
                 FROM course_dependencies cd
-                JOIN courses c ON cd.prerequisite_course_code = c.course_code
+                JOIN courses c ON cd.prerequisite_course_code = c.course_code 
                 WHERE cd.course_code IN ({$placeholders})
+                AND (c.user_id = ? OR c.user_id = (SELECT id FROM users WHERE username = ?))
             ";
 
-            $prereqs_types = str_repeat('s', count($course_codes));
-            $prereqs_params = $course_codes;
+            $prereqs_types = str_repeat('s', count($course_codes)) . 'is';
+            $prereqs_params = array_merge($course_codes, [$user_id, SYSTEM_USERNAME]);
 
             $prereqs_stmt = $conn->prepare($prereqs_sql);
             if (!$prereqs_stmt) {

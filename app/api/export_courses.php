@@ -1,11 +1,11 @@
 <?php
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/auth.php';
-require_once __DIR__ . '/course_manager.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../auth.php';
+require_once __DIR__ . '/../course_manager.php';
 
 // Ensure user is logged in
 if (!isLoggedIn()) {
-    header('Location: login.php');
+    header('Location: ../login.php');
     exit();
 }
 
@@ -16,16 +16,8 @@ if ($system_user_id === null) {
     die("System user not found. Please contact support.");
 }
 
-// Get the export type from the request
-$export_type = $_GET['type'] ?? '';
-
-// Get courses based on export type
-if ($export_type === 'all') {
-    $courses = getAllCoursesForUser($current_user_id, $system_user_id);
-} else {
-    // Default to user's courses
-    $courses = getManuallyAddedCourses($current_user_id);
-}
+// Get all courses (both system and user's imported courses)
+$courses = getAllCoursesForUser($current_user_id, $system_user_id);
 
 // Set headers for CSV download
 header('Content-Type: text/csv');
@@ -44,9 +36,7 @@ fputcsv($output, ['course_code', 'course_name', 'credits', 'department', 'depend
 foreach ($courses as $course) {
     $dependencies = '';
     if (!empty($course['prerequisites'])) {
-        $dependencies = implode(',', array_map(function($prereq) {
-            return $prereq['course_code'];
-        }, $course['prerequisites']));
+        $dependencies = implode(',', $course['prerequisites']);
     }
     
     fputcsv($output, [

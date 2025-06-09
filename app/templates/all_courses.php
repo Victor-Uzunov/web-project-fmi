@@ -44,8 +44,9 @@
     </form>
 </div>
 
-<div class="p-6 bg-green-50 rounded-lg shadow-sm">
-    <h2 class="text-2xl font-semibold text-green-700 mb-4">All Available Courses</h2>
+<div class="p-6 bg-yellow-50 rounded-lg shadow-sm">
+    <h2 class="text-2xl font-semibold text-yellow-700 mb-4">All Available Courses</h2>
+    <p class="text-gray-600 mb-4">This page shows all system courses and your imported courses. You can import courses from the system to your account.</p>
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200 shadow-md rounded-lg overflow-hidden">
             <thead class="bg-green-100">
@@ -55,6 +56,7 @@
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Credits</th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Department</th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Prerequisites</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider rounded-tr-lg">Source</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -66,20 +68,28 @@
                             <td class='px-6 py-4 whitespace-nowrap text-sm text-gray-700'><?php echo htmlspecialchars($course['credits']); ?></td>
                             <td class='px-6 py-4 whitespace-nowrap text-sm text-gray-700'><?php echo htmlspecialchars($course['department']); ?></td>
                             <td class='px-6 py-4 text-sm text-gray-700'>
-                                <?php if (!empty($course['prerequisites'])): ?>
-                                    <ul class="list-disc list-inside">
-                                        <?php foreach ($course['prerequisites'] as $prereq): ?>
-                                            <li><?php echo htmlspecialchars($prereq['course_code'] . ' - ' . $prereq['course_name']); ?></li>
-                                        <?php endforeach; ?>
-                                    </ul>
+                                <?php 
+                                if (!empty($course['prerequisites'])) {
+                                    $prereqs = is_array($course['prerequisites']) ? $course['prerequisites'] : explode(',', $course['prerequisites']);
+                                    echo htmlspecialchars(implode(', ', $prereqs));
+                                } else {
+                                    echo 'None';
+                                }
+                                ?>
+                            </td>
+                            <td class='px-6 py-4 whitespace-nowrap text-sm text-gray-700'>
+                                <?php if ($course['user_id'] === $system_user_id): ?>
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">System</span>
                                 <?php else: ?>
-                                    None
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        <?php echo ucfirst($course['source_type']); ?>
+                                    </span>
                                 <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <tr><td colspan='5' class='px-6 py-4 text-sm text-gray-500 text-center'>No courses found.</td></tr>
+                    <tr><td colspan='6' class='px-6 py-4 text-sm text-gray-500 text-center'>No courses found.</td></tr>
                 <?php endif; ?>
             </tbody>
         </table>

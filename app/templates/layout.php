@@ -198,21 +198,25 @@ require_once __DIR__ . '/../auth.php';
                         Show Graph
                     </a>
                     <div class="flex-grow"></div>
-                    <button onclick="document.getElementById('csvFileInput').click()" 
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 mr-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                        </svg>
-                        Import
-                    </button>
-                    <button onclick="handleExport()" 
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        Export
-                    </button>
-                    <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleCSVUpload(this.files[0], window.location.pathname.includes('all_courses.php') ? 'global' : 'user')">
+                    <?php if (strpos($_SERVER['PHP_SELF'], 'all_courses.php') !== false): ?>
+                    <div class="flex items-center space-x-4">
+                        <button onclick="document.getElementById('csvFileInput').click()" 
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            </svg>
+                            Import
+                        </button>
+                        <button onclick="handleExport()" 
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Export
+                        </button>
+                        <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleCSVUpload(this.files[0], 'user')">
+                    </div>
+                    <?php endif; ?>
                 <?php else: ?>
                     <a href="<?php echo $courses_link; ?>" 
                         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -408,12 +412,9 @@ require_once __DIR__ . '/../auth.php';
     </script>
     <script>
         function handleExport() {
-            const isAllCourses = window.location.pathname.includes('all_courses.php');
-            const url = `export_courses.php${isAllCourses ? '?type=all' : ''}`;
-            
             // Create a temporary link element
             const link = document.createElement('a');
-            link.href = url;
+            link.href = 'api/export_courses.php';
             link.target = '_blank';
             document.body.appendChild(link);
             
@@ -424,7 +425,7 @@ require_once __DIR__ . '/../auth.php';
             document.body.removeChild(link);
             
             // Show the success notification
-            showExportNotification(isAllCourses ? 'all available' : 'your');
+            showExportNotification('all available');
         }
 
         function showExportNotification(type) {

@@ -72,9 +72,9 @@ foreach ($courses_data as $course) {
 
     // Add dependencies as edges
     if (!empty($course['prerequisites'])) {
-        foreach ($course['prerequisites'] as $prereq) {
+        foreach ($course['prerequisites'] as $prereq_code) {
             $edges[] = [
-                'from' => $prereq['course_code'],
+                'from' => $prereq_code,
                 'to' => $course['course_code'],
                 'arrows' => 'to', // Arrow points from prerequisite to the course
                 'label' => 'Prerequisite',

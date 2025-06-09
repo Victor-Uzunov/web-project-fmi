@@ -6,9 +6,9 @@ require_once __DIR__ . '/auth.php';   // For loginUser() and isLoggedIn(), regis
 
 $message = ''; // Message for displaying success/error
 
-// If already logged in, redirect to index.php
+// If already logged in, redirect to all_courses.php
 if (isLoggedIn()) {
-    header("Location: index.php");
+    header("Location: all_courses.php");
     exit();
 }
 
@@ -21,7 +21,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['login'])) {
         $message = "<p class='text-red-600 font-semibold mb-4'>Please fill in all fields for login.</p>";
     } else {
         if (loginUser($username, $password)) {
-            header("Location: index.php"); // Redirect on successful login
+            header("Location: all_courses.php"); // Redirect on successful login
             exit();
         } else {
             $message = "<p class='text-red-600 font-semibold mb-4'>Invalid username or password.</p>";
