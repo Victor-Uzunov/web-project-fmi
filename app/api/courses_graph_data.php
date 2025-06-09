@@ -59,7 +59,7 @@ $edges = [];
 foreach ($courses_data as $course) {
     // Add course as a node
     $nodes[] = [
-        'id' => $course['id'],
+        'id' => $course['course_code'],
         'label' => htmlspecialchars($course['course_name']), // Display course name as main label
         'title' => htmlspecialchars($course['course_name'] . ' (' . $course['course_code'] . ') - ' . $course['department'] . ' - ' . $course['credits'] . ' Credits'), // More details on hover
         'group' => htmlspecialchars($course['department']), // Group by department for potential coloring
@@ -72,10 +72,10 @@ foreach ($courses_data as $course) {
 
     // Add dependencies as edges
     if (!empty($course['prerequisites'])) {
-        foreach ($course['prerequisites'] as $prereq) {
+        foreach ($course['prerequisites'] as $prereq_code) {
             $edges[] = [
-                'from' => $prereq['id'],
-                'to' => $course['id'],
+                'from' => $prereq_code,
+                'to' => $course['course_code'],
                 'arrows' => 'to', // Arrow points from prerequisite to the course
                 'label' => 'Prerequisite',
                 'font' => ['align' => 'middle'],

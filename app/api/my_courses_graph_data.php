@@ -21,7 +21,7 @@ $edges = [];
 foreach ($courses_data as $course) {
     // Add course as a node
     $nodes[] = [
-        'id' => $course['id'],
+        'id' => $course['course_code'],
         'label' => htmlspecialchars($course['course_name']), // Display course name as main label
         'title' => htmlspecialchars($course['course_name'] . ' (' . $course['course_code'] . ') - ' . $course['department'] . ' - ' . $course['credits'] . ' Credits'), // More details on hover
         'group' => htmlspecialchars($course['department']), // Group by department for potential coloring
@@ -35,15 +35,27 @@ foreach ($courses_data as $course) {
     // Add edges for prerequisites
     if (!empty($course['prerequisites'])) {
         foreach ($course['prerequisites'] as $prereq) {
-            $edges[] = [
-                'from' => $prereq['id'],
-                'to' => $course['id'],
-                'arrows' => 'to',
-                'label' => 'Prerequisite',
-                'font' => ['align' => 'middle'],
-                'color' => ['color' => '#888', 'highlight' => '#333'],
-                'dashes' => true
-            ];
+            // Check if this edge already exists
+            $edge_exists = false;
+            foreach ($edges as $existing_edge) {
+                if ($existing_edge['from'] === $prereq['course_code'] && $existing_edge['to'] === $course['course_code']) {
+                    $edge_exists = true;
+                    break;
+                }
+            }
+            
+            // Only add the edge if it doesn't already exist
+            if (!$edge_exists) {
+                $edges[] = [
+                    'from' => $prereq['course_code'],
+                    'to' => $course['course_code'],
+                    'arrows' => 'to',
+                    'label' => 'Prerequisite',
+                    'font' => ['align' => 'middle'],
+                    'color' => ['color' => '#888', 'highlight' => '#333'],
+                    'dashes' => true
+                ];
+            }
         }
     }
 }

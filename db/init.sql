@@ -12,116 +12,94 @@ CREATE TABLE IF NOT EXISTS users (
 DROP TABLE IF EXISTS course_dependencies;
 DROP TABLE IF EXISTS courses;
 
--- Create the courses table (department as ENUM, unique per user_id and course_code)
+-- Create the courses table (department as ENUM, course_code as PRIMARY KEY)
 CREATE TABLE IF NOT EXISTS courses (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,              -- Link to the user who created the course (could be a regular user or 'system' user)
+    user_id INT NOT NULL,
     course_code VARCHAR(20) NOT NULL,
     course_name VARCHAR(255) NOT NULL,
     credits INT NOT NULL,
     department ENUM('Mathematics', 'Software Technologies', 'Informatics', 'Database', 'English', 'Soft Skills', 'Other') NOT NULL DEFAULT 'Other',
+    source_type ENUM('system', 'imported', 'added') NOT NULL DEFAULT 'added',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE (user_id, course_code) -- Ensure course code is unique PER USER (including the 'system' user)
+    PRIMARY KEY (user_id, course_code),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Create the course_dependencies table for prerequisites
 CREATE TABLE IF NOT EXISTS course_dependencies (
-    course_id INT NOT NULL,
-    prerequisite_course_id INT NOT NULL,
-    PRIMARY KEY (course_id, prerequisite_course_id), -- Composite primary key
-    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
-    FOREIGN KEY (prerequisite_course_id) REFERENCES courses(id) ON DELETE CASCADE
+    course_user_id INT NOT NULL,
+    course_code VARCHAR(20) NOT NULL,
+    prereq_user_id INT NOT NULL,
+    prerequisite_course_code VARCHAR(20) NOT NULL,
+    PRIMARY KEY (course_user_id, course_code, prereq_user_id, prerequisite_course_code),
+    FOREIGN KEY (course_user_id, course_code) REFERENCES courses(user_id, course_code) ON DELETE CASCADE,
+    FOREIGN KEY (prereq_user_id, prerequisite_course_code) REFERENCES courses(user_id, course_code) ON DELETE CASCADE
 );
 
 INSERT IGNORE INTO users (username, password_hash) VALUES
 ('system', '$2y$10$XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'); -- Dummy hash, not used for login
 
--- Admin dependencies
-INSERT IGNORE INTO course_dependencies (course_id, prerequisite_course_id) VALUES
-((SELECT id FROM courses WHERE course_code = 'ADM201' AND user_id = (SELECT id FROM users WHERE username = 'admin')),
- (SELECT id FROM courses WHERE course_code = 'ADM101' AND user_id = (SELECT id FROM users WHERE username = 'admin')));
+-- Insert seed courses (all will be associated with the system user)
+INSERT IGNORE INTO courses (course_code, user_id, course_name, credits, department, source_type) VALUES
+-- Mathematics Department
+('MATH101', 1, 'Calculus I', 6, 'Mathematics', 'system'),
+('MATH102', 1, 'Linear Algebra', 5, 'Mathematics', 'system'),
+('MATH201', 1, 'Calculus II', 6, 'Mathematics', 'system'),
+('MATH202', 1, 'Discrete Mathematics', 5, 'Mathematics', 'system'),
 
+-- Software Technologies Department
+('SWE101', 1, 'Introduction to Programming', 6, 'Software Technologies', 'system'),
+('SWE102', 1, 'Object-Oriented Programming', 6, 'Software Technologies', 'system'),
+('SWE201', 1, 'Data Structures and Algorithms', 6, 'Software Technologies', 'system'),
+('SWE202', 1, 'Software Engineering Principles', 5, 'Software Technologies', 'system'),
 
--- Insert Global Courses for 'system' user (ID derived from SELECT)
--- These courses are designed to form a large, interconnected core curriculum
-INSERT IGNORE INTO courses (user_id, course_code, course_name, credits, department) VALUES
-((SELECT id FROM users WHERE username = 'system'), 'GLO101', 'Global Intro to CS', 4, 'Software Technologies'),
-((SELECT id FROM users WHERE username = 'system'), 'GLO102', 'Global Calculus I', 4, 'Mathematics'),
-((SELECT id FROM users WHERE username = 'system'), 'GLO103', 'Global Physics I', 4, 'Other'),
-((SELECT id FROM users WHERE username = 'system'), 'GLO201', 'Global Data Structures', 4, 'Informatics'),
-((SELECT id FROM users WHERE username = 'system'), 'GLO202', 'Global Linear Algebra', 3, 'Mathematics'),
-((SELECT id FROM users WHERE username = 'system'), 'GLO203', 'Global Object-Oriented Design', 4, 'Software Technologies'),
-((SELECT id FROM users WHERE username = 'system'), 'GLO301', 'Global Algorithms', 4, 'Informatics'),
-((SELECT id FROM users WHERE username = 'system'), 'GLO302', 'Global Probability & Stats', 3, 'Mathematics'),
-((SELECT id FROM users WHERE username = 'system'), 'GLO303', 'Global Database Systems', 3, 'Database'),
-((SELECT id FROM users WHERE username = 'system'), 'GLO401', 'Global Machine Learning', 4, 'Informatics'),
-((SELECT id FROM users WHERE username = 'system'), 'GLO402', 'Global Compilers', 4, 'Software Technologies'),
-((SELECT id FROM users WHERE username = 'system'), 'GLO403', 'Global Software Engineering', 3, 'Software Technologies'),
-((SELECT id FROM users WHERE username = 'system'), 'GLO501', 'Global AI Ethics', 2, 'Soft Skills'),
-((SELECT id FROM users WHERE username = 'system'), 'GLO502', 'Global Distributed Systems', 4, 'Software Technologies');
+-- Informatics Department
+('INF101', 1, 'Computer Architecture', 5, 'Informatics', 'system'),
+('INF102', 1, 'Operating Systems', 5, 'Informatics', 'system'),
+('INF201', 1, 'Computer Networks', 5, 'Informatics', 'system'),
+('INF202', 1, 'System Programming', 6, 'Informatics', 'system'),
 
+-- Database Department
+('DB101', 1, 'Introduction to Databases', 5, 'Database', 'system'),
+('DB102', 1, 'SQL Programming', 4, 'Database', 'system'),
+('DB201', 1, 'Database Design', 5, 'Database', 'system'),
+('DB202', 1, 'Advanced Database Systems', 6, 'Database', 'system'),
 
--- Add Dependencies for Global Courses
-INSERT IGNORE INTO course_dependencies (course_id, prerequisite_course_id) VALUES
--- GLO201 (Data Structures) depends on GLO101 (Intro to CS) and GLO102 (Calc I)
-((SELECT id FROM courses WHERE course_code = 'GLO201' AND user_id = (SELECT id FROM users WHERE username = 'system')),
- (SELECT id FROM courses WHERE course_code = 'GLO101' AND user_id = (SELECT id FROM users WHERE username = 'system'))),
-((SELECT id FROM courses WHERE course_code = 'GLO201' AND user_id = (SELECT id FROM users WHERE username = 'system')),
- (SELECT id FROM courses WHERE course_code = 'GLO102' AND user_id = (SELECT id FROM users WHERE username = 'system'))),
+-- English Department
+('ENG101', 1, 'Academic Writing', 4, 'English', 'system'),
+('ENG102', 1, 'Technical Communication', 3, 'English', 'system'),
+('ENG201', 1, 'Professional Writing', 4, 'English', 'system'),
 
--- GLO202 (Linear Algebra) depends on GLO102 (Calc I)
-((SELECT id FROM courses WHERE course_code = 'GLO202' AND user_id = (SELECT id FROM users WHERE username = 'system')),
- (SELECT id FROM courses WHERE course_code = 'GLO102' AND user_id = (SELECT id FROM users WHERE username = 'system'))),
+-- Soft Skills Department
+('SSK101', 1, 'Team Collaboration', 3, 'Soft Skills', 'system'),
+('SSK102', 1, 'Project Management', 4, 'Soft Skills', 'system'),
+('SSK201', 1, 'Leadership Skills', 4, 'Soft Skills', 'system');
 
--- GLO203 (OOD) depends on GLO101 (Intro to CS)
-((SELECT id FROM courses WHERE course_code = 'GLO203' AND user_id = (SELECT id FROM users WHERE username = 'system')),
- (SELECT id FROM courses WHERE course_code = 'GLO101' AND user_id = (SELECT id FROM users WHERE username = 'system'))),
+-- Insert course dependencies
+INSERT IGNORE INTO course_dependencies (course_user_id, course_code, prereq_user_id, prerequisite_course_code) VALUES
+-- Math dependencies
+(1, 'MATH201', 1, 'MATH101'),
+(1, 'MATH202', 1, 'MATH101'),
 
--- GLO301 (Algorithms) depends on GLO201 (Data Structures) and GLO202 (Linear Algebra)
-((SELECT id FROM courses WHERE course_code = 'GLO301' AND user_id = (SELECT id FROM users WHERE username = 'system')),
- (SELECT id FROM courses WHERE course_code = 'GLO201' AND user_id = (SELECT id FROM users WHERE username = 'system'))),
-((SELECT id FROM courses WHERE course_code = 'GLO301' AND user_id = (SELECT id FROM users WHERE username = 'system')),
- (SELECT id FROM courses WHERE course_code = 'GLO202' AND user_id = (SELECT id FROM users WHERE username = 'system'))),
+-- Software Engineering dependencies
+(1, 'SWE102', 1, 'SWE101'),
+(1, 'SWE201', 1, 'SWE102'),
+(1, 'SWE202', 1, 'SWE201'),
 
--- GLO302 (Prob & Stats) depends on GLO102 (Calc I)
-((SELECT id FROM courses WHERE course_code = 'GLO302' AND user_id = (SELECT id FROM users WHERE username = 'system')),
- (SELECT id FROM courses WHERE course_code = 'GLO102' AND user_id = (SELECT id FROM users WHERE username = 'system'))),
+-- Informatics dependencies
+(1, 'INF102', 1, 'INF101'),
+(1, 'INF201', 1, 'INF102'),
+(1, 'INF202', 1, 'INF102'),
 
--- GLO303 (Database Systems) depends on GLO101 (Intro to CS) and GLO103 (Physics)
-((SELECT id FROM courses WHERE course_code = 'GLO303' AND user_id = (SELECT id FROM users WHERE username = 'system')),
- (SELECT id FROM courses WHERE course_code = 'GLO101' AND user_id = (SELECT id FROM users WHERE username = 'system'))),
-((SELECT id FROM courses WHERE course_code = 'GLO303' AND user_id = (SELECT id FROM users WHERE username = 'system')),
- (SELECT id FROM courses WHERE course_code = 'GLO103' AND user_id = (SELECT id FROM users WHERE username = 'system'))), -- Cross-disciplinary
+-- Database dependencies
+(1, 'DB102', 1, 'DB101'),
+(1, 'DB201', 1, 'DB102'),
+(1, 'DB202', 1, 'DB201'),
 
--- GLO401 (Machine Learning) depends on GLO301 (Algorithms) and GLO302 (Prob & Stats)
-((SELECT id FROM courses WHERE course_code = 'GLO401' AND user_id = (SELECT id FROM users WHERE username = 'system')),
- (SELECT id FROM courses WHERE course_code = 'GLO301' AND user_id = (SELECT id FROM users WHERE username = 'system'))),
-((SELECT id FROM courses WHERE course_code = 'GLO401' AND user_id = (SELECT id FROM users WHERE username = 'system')),
- (SELECT id FROM courses WHERE course_code = 'GLO302' AND user_id = (SELECT id FROM users WHERE username = 'system'))),
+-- English dependencies
+(1, 'ENG201', 1, 'ENG101'),
 
--- GLO402 (Compilers) depends on GLO301 (Algorithms) and GLO203 (OOD)
-((SELECT id FROM courses WHERE course_code = 'GLO402' AND user_id = (SELECT id FROM users WHERE username = 'system')),
- (SELECT id FROM courses WHERE course_code = 'GLO301' AND user_id = (SELECT id FROM users WHERE username = 'system'))),
-((SELECT id FROM courses WHERE course_code = 'GLO402' AND user_id = (SELECT id FROM users WHERE username = 'system')),
- (SELECT id FROM courses WHERE course_code = 'GLO203' AND user_id = (SELECT id FROM users WHERE username = 'system'))),
-
--- GLO403 (Software Engineering) depends on GLO203 (OOD) and GLO303 (DB Systems)
-((SELECT id FROM courses WHERE course_code = 'GLO403' AND user_id = (SELECT id FROM users WHERE username = 'system')),
- (SELECT id FROM courses WHERE course_code = 'GLO203' AND user_id = (SELECT id FROM users WHERE username = 'system'))),
-((SELECT id FROM courses WHERE course_code = 'GLO403' AND user_id = (SELECT id FROM users WHERE username = 'system')),
- (SELECT id FROM courses WHERE course_code = 'GLO303' AND user_id = (SELECT id FROM users WHERE username = 'system'))),
-
--- GLO501 (AI Ethics) depends on GLO401 (Machine Learning) and GLO103 (Physics)
-((SELECT id FROM courses WHERE course_code = 'GLO501' AND user_id = (SELECT id FROM users WHERE username = 'system')),
- (SELECT id FROM courses WHERE course_code = 'GLO401' AND user_id = (SELECT id FROM users WHERE username = 'system'))),
-((SELECT id FROM courses WHERE course_code = 'GLO501' AND user_id = (SELECT id FROM users WHERE username = 'system')),
- (SELECT id FROM courses WHERE course_code = 'GLO103' AND user_id = (SELECT id FROM users WHERE username = 'system'))),
-
--- GLO502 (Distributed Systems) depends on GLO301 (Algorithms) and GLO403 (Software Engineering)
-((SELECT id FROM courses WHERE course_code = 'GLO502' AND user_id = (SELECT id FROM users WHERE username = 'system')),
- (SELECT id FROM courses WHERE course_code = 'GLO301' AND user_id = (SELECT id FROM users WHERE username = 'system'))),
-((SELECT id FROM courses WHERE course_code = 'GLO502' AND user_id = (SELECT id FROM users WHERE username = 'system')),
- (SELECT id FROM courses WHERE course_code = 'GLO403' AND user_id = (SELECT id FROM users WHERE username = 'system')));
+-- Soft Skills dependencies
+(1, 'SSK201', 1, 'SSK101');
 
 SELECT 'init.sql script finished successfully with extensive Global and Victor data';

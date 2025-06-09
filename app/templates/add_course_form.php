@@ -43,7 +43,7 @@
                     class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm h-32 overflow-y-auto">
                 <?php if (!empty($prerequisites_options)): ?>
                     <?php foreach ($prerequisites_options as $option): ?>
-                        <option value="<?php echo htmlspecialchars($option['id']); ?>">
+                        <option value="<?php echo htmlspecialchars($option['course_code']); ?>">
                             <?php echo htmlspecialchars($option['course_code'] . ' - ' . $option['course_name']); ?>
                         </option>
                     <?php endforeach; ?>

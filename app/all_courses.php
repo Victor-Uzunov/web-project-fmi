@@ -33,6 +33,7 @@ $courses_to_display = $courses;
 $departments_enum = DEPARTMENTS;
 $current_search_name = $search_name;
 $current_filter_department = $filter_department;
+$system_user_id = $system_user_id;
 
 // Render the main layout
 include __DIR__ . '/templates/layout.php';
