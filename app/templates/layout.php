@@ -108,6 +108,40 @@ require_once __DIR__ . '/../auth.php';
     <div class="decorative-circle circle-3"></div>
 
     <div class="container mx-auto max-w-9xl bg-white rounded-lg shadow-xl p-8">
+        <!-- Export Success Toast -->
+        <?php if (isset($_SESSION['export_success'])): ?>
+        <div id="exportToast" class="fixed top-4 right-4 bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded shadow-lg transform transition-transform duration-300 ease-in-out translate-x-0 z-50">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium">Export Successful!</p>
+                    <p class="text-sm mt-1">
+                        <?php 
+                        $count = $_SESSION['export_success']['count'];
+                        $type = $_SESSION['export_success']['type'];
+                        echo "Successfully exported {$count} " . ($count === 1 ? 'course' : 'courses') . " from {$type} courses.";
+                        ?>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <script>
+            // Auto-dismiss the toast after 4 seconds
+            setTimeout(function() {
+                const toast = document.getElementById('exportToast');
+                if (toast) {
+                    toast.style.transform = 'translateX(100%)';
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, 4000);
+        </script>
+        <?php unset($_SESSION['export_success']); ?>
+        <?php endif; ?>
+
         <header class="flex justify-between items-center mb-8 rounded-md header-gradient p-6">
             <h1 class="text-4xl font-bold text-white">University Course Manager</h1>
             <?php if (isLoggedIn()): ?>
@@ -165,11 +199,18 @@ require_once __DIR__ . '/../auth.php';
                     </a>
                     <div class="flex-grow"></div>
                     <button onclick="document.getElementById('csvFileInput').click()" 
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 mr-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                         </svg>
                         Import
+                    </button>
+                    <button onclick="handleExport()" 
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Export
                     </button>
                     <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleCSVUpload(this.files[0], window.location.pathname.includes('all_courses.php') ? 'global' : 'user')">
                 <?php else: ?>
@@ -364,6 +405,62 @@ require_once __DIR__ . '/../auth.php';
             window.location.href = '/index.php';
         }
     }
+    </script>
+    <script>
+        function handleExport() {
+            const isAllCourses = window.location.pathname.includes('all_courses.php');
+            const url = `export_courses.php${isAllCourses ? '?type=all' : ''}`;
+            
+            // Create a temporary link element
+            const link = document.createElement('a');
+            link.href = url;
+            link.target = '_blank';
+            document.body.appendChild(link);
+            
+            // Trigger the download
+            link.click();
+            
+            // Remove the temporary link
+            document.body.removeChild(link);
+            
+            // Show the success notification
+            showExportNotification(isAllCourses ? 'all available' : 'your');
+        }
+
+        function showExportNotification(type) {
+            // Create the toast element
+            const toast = document.createElement('div');
+            toast.id = 'exportToast';
+            toast.className = 'fixed top-4 right-4 bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded shadow-lg transform transition-transform duration-300 ease-in-out translate-x-0 z-50';
+            
+            // Get the course count from the table
+            const courseCount = document.querySelectorAll('tbody tr').length;
+            
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium">Export Successful!</p>
+                        <p class="text-sm mt-1">
+                            Successfully exported ${courseCount} ${courseCount === 1 ? 'course' : 'courses'} from ${type} courses.
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            // Add the toast to the document
+            document.body.appendChild(toast);
+            
+            // Auto-dismiss after 4 seconds
+            setTimeout(() => {
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
     </script>
 </body>
 </html>
