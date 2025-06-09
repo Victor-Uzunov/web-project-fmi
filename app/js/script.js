@@ -1,6 +1,3 @@
-// app/js/script.js
-
-// Function to open the edit course modal and populate its fields
 function openEditModal(course) {
     console.log('Opening edit modal for course:', course);
     const modal = document.getElementById('editCourseModal');
@@ -24,19 +21,16 @@ function openEditModal(course) {
         prerequisiteSelect
     });
 
-    // Populate form fields with existing course data
     oldCourseCodeField.value = course.course_code;
     courseCodeField.value = course.course_code;
     courseNameField.value = course.course_name;
     creditsField.value = course.credits;
     departmentSelect.value = course.department;
 
-    // Clear previous selections in the prerequisites dropdown
     for (let i = 0; i < prerequisiteSelect.options.length; i++) {
         prerequisiteSelect.options[i].selected = false;
     }
 
-    // Select current prerequisites for this course in the dropdown
     if (course.prerequisites && Array.isArray(course.prerequisites) && course.prerequisites.length > 0) {
         const currentPrerequisiteCodes = course.prerequisites.map(p => p.course_code);
 
@@ -47,25 +41,21 @@ function openEditModal(course) {
         }
     }
 
-    // Reset prerequisite search input and apply initial filter
     prerequisiteSearchInput.value = '';
     filterSelectOptions('edit_prerequisites', 'edit_prereq_search');
 
-    // Display the modal
     console.log('Showing modal...');
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     console.log('Modal classes after showing:', modal.classList);
 }
 
-// Function to close the edit course modal
 function closeEditModal() {
     const modal = document.getElementById('editCourseModal');
     modal.classList.add('hidden');
     modal.classList.remove('flex');
 }
 
-// Function to handle course deletion
 function deleteCourse(courseCode, courseName) {
     if (confirm(`Are you sure you want to delete the course "${courseName}"? This action cannot be undone.`)) {
         const form = document.createElement('form');
@@ -89,7 +79,6 @@ function deleteCourse(courseCode, courseName) {
     }
 }
 
-// Function to filter options in a select dropdown based on a search input
 function filterSelectOptions(selectId, searchInputId) {
     const select = document.getElementById(selectId);
     const searchTerm = document.getElementById(searchInputId).value.toLowerCase();
@@ -108,9 +97,7 @@ function filterSelectOptions(selectId, searchInputId) {
     }
 }
 
-// Event listeners for prerequisite search inputs
 document.addEventListener('DOMContentLoaded', () => {
-    // For the add course form
     const addPrereqSearch = document.getElementById('prereq_search');
     if (addPrereqSearch) {
         addPrereqSearch.addEventListener('keyup', () => {
@@ -118,7 +105,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // For the edit course modal
     const editPrereqSearch = document.getElementById('edit_prereq_search');
     if (editPrereqSearch) {
         editPrereqSearch.addEventListener('keyup', () => {
@@ -126,7 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Close modal when clicking outside
     const modal = document.getElementById('editCourseModal');
     if (modal) {
         modal.addEventListener('click', (event) => {

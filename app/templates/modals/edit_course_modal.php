@@ -1,6 +1,6 @@
 <?php
-// app/templates/modals/edit_course_modal.php
-// This modal expects $prerequisite_options and $departments_enum to be available from the parent scope.
+
+
 ?>
 <script>
     console.log('Edit modal template loaded');

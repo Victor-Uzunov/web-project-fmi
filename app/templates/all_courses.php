@@ -1,11 +1,11 @@
 <?php
-// app/templates/all_courses.php
 
-// Variables expected from all_courses.php:
-// $courses_to_display
-// $departments_enum
-// $current_search_name
-// $current_filter_department
+
+
+
+
+
+
 ?>
 
 <div class="mb-10 p-6 bg-yellow-50 rounded-lg shadow-sm">
@@ -68,7 +68,7 @@
                             <td class='px-6 py-4 whitespace-nowrap text-sm text-gray-700'><?php echo htmlspecialchars($course['credits']); ?></td>
                             <td class='px-6 py-4 whitespace-nowrap text-sm text-gray-700'><?php echo htmlspecialchars($course['department']); ?></td>
                             <td class='px-6 py-4 text-sm text-gray-700'>
-                                <?php 
+                                <?php
                                 if (!empty($course['prerequisites'])) {
                                     $prereqs = is_array($course['prerequisites']) ? $course['prerequisites'] : explode(',', $course['prerequisites']);
                                     echo htmlspecialchars(implode(', ', $prereqs));
@@ -94,4 +94,4 @@
             </tbody>
         </table>
     </div>
-</div> 
+</div>
