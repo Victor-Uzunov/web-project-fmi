@@ -7,7 +7,7 @@ require_once __DIR__ . '/auth.php';
 $message = '';
 
 if (isLoggedIn()) {
-    header("Location: index.php");
+    header("Location: all_courses.php");
     exit();
 }
 

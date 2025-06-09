@@ -59,9 +59,8 @@ foreach ($courses_data as $course) {
         'credits' => htmlspecialchars($course['credits']),
     ];
 
-    // Add dependencies as edges
     if (!empty($course['prerequisites'])) {
-        foreach ($course['prerequisites'] as $prereq) {
+        foreach ($course['prerequisites'] as $prereq_code) {
             $edges[] = [
                 'from' => $prereq['id'],
                 'to' => $course['id'],
@@ -75,7 +74,6 @@ foreach ($courses_data as $course) {
     }
 }
 
-// Prepare the data structure for vis.js
 $graph_data = [
     'nodes' => $nodes,
     'edges' => $edges

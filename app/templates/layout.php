@@ -105,7 +105,41 @@ require_once __DIR__ . '/../auth.php';
     <div class="decorative-circle circle-2"></div>
     <div class="decorative-circle circle-3"></div>
 
-    <div class="container mx-auto max-w-7xl bg-white rounded-lg shadow-xl p-8">
+    <div class="container mx-auto max-w-9xl bg-white rounded-lg shadow-xl p-8">
+        <!-- Export Success Toast -->
+        <?php if (isset($_SESSION['export_success'])): ?>
+        <div id="exportToast" class="fixed top-4 right-4 bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded shadow-lg transform transition-transform duration-300 ease-in-out translate-x-0 z-50">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium">Export Successful!</p>
+                    <p class="text-sm mt-1">
+                        <?php 
+                        $count = $_SESSION['export_success']['count'];
+                        $type = $_SESSION['export_success']['type'];
+                        echo "Successfully exported {$count} " . ($count === 1 ? 'course' : 'courses') . " from {$type} courses.";
+                        ?>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <script>
+            // Auto-dismiss the toast after 4 seconds
+            setTimeout(function() {
+                const toast = document.getElementById('exportToast');
+                if (toast) {
+                    toast.style.transform = 'translateX(100%)';
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, 4000);
+        </script>
+        <?php unset($_SESSION['export_success']); ?>
+        <?php endif; ?>
+
         <header class="flex justify-between items-center mb-8 rounded-md header-gradient p-6">
             <h1 class="text-4xl font-bold text-white">University Course Manager</h1>
             <?php if (isLoggedIn()): ?>
@@ -158,6 +192,26 @@ require_once __DIR__ . '/../auth.php';
                         </svg>
                         Show Graph
                     </a>
+                    <div class="flex-grow"></div>
+                    <?php if (strpos($_SERVER['PHP_SELF'], 'all_courses.php') !== false): ?>
+                    <div class="flex items-center space-x-4">
+                        <button onclick="document.getElementById('csvFileInput').click()" 
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            </svg>
+                            Import
+                        </button>
+                        <button onclick="handleExport()" 
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Export
+                        </button>
+                        <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleCSVUpload(this.files[0], 'user')">
+                    </div>
+                    <?php endif; ?>
                 <?php else: ?>
                     <a href="<?php echo $courses_link; ?>" 
                         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -182,8 +236,35 @@ require_once __DIR__ . '/../auth.php';
         </main>
     </div>
 
+    <!-- Import Results Modal -->
+    <div id="importResultsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-indigo-700">Import Results</h2>
+                <button type="button" class="text-gray-400 hover:text-gray-600 text-3xl font-bold" onclick="closeImportResultsModal()">
+                    &times;
+                </button>
+            </div>
+            <div id="importResultsContent" class="space-y-4">
+                <!-- Results will be inserted here -->
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button onclick="closeImportResultsModal()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Include JavaScript for modal functionality -->
-    <script src="js/script.js"></script>
+    <script>
+        console.log('Loading script.js...');
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            console.error('Error: ' + msg + '\nURL: ' + url + '\nLine: ' + lineNo + '\nColumn: ' + columnNo + '\nError object: ' + JSON.stringify(error));
+            return false;
+        };
+    </script>
+    <script src="js/script.js" onerror="console.error('Failed to load script.js')" onload="console.log('script.js loaded successfully')"></script>
     <script>
         document.addEventListener('click', function(event) {
             const dropdowns = document.querySelectorAll('[id$="Dropdown"]');
@@ -205,6 +286,172 @@ require_once __DIR__ . '/../auth.php';
             });
             
             dropdown.classList.toggle('hidden');
+        }
+    </script>
+    <script>
+    function handleCSVUpload(file, source = 'user') {
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('csvFile', file);
+        formData.append('source', source);
+
+        // Show loading state
+        const modal = document.getElementById('importResultsModal');
+        const content = document.getElementById('importResultsContent');
+        content.innerHTML = '<div class="text-center py-4"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div><p class="mt-2 text-gray-600">Importing courses...</p></div>';
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        fetch('api/import_courses.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            let html = '';
+            
+            if (data.error) {
+                html = `
+                    <div class="bg-red-50 border-l-4 border-red-400 p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-red-700">${data.message}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Show success message
+                html = `
+                    <div class="bg-green-50 border-l-4 border-green-400 p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-green-700">${data.message}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Show any errors that occurred during import
+                if (data.details.errors.length > 0) {
+                    html += `
+                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mt-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-yellow-800">Errors occurred during import:</h3>
+                                    <div class="mt-2 text-sm text-yellow-700">
+                                        <ul class="list-disc pl-5 space-y-1">
+                                            ${data.details.errors.map(error => `<li>${error}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            content.innerHTML = html;
+        })
+        .catch(error => {
+            content.innerHTML = `
+                <div class="bg-red-50 border-l-4 border-red-400 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-red-700">Failed to import courses: ${error.message}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function closeImportResultsModal() {
+        const modal = document.getElementById('importResultsModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        // Clear the file input
+        document.getElementById('csvFileInput').value = '';
+        // Redirect based on the current page
+        if (window.location.pathname.includes('all_courses.php')) {
+            window.location.href = '/all_courses.php';
+        } else {
+            window.location.href = '/index.php';
+        }
+    }
+    </script>
+    <script>
+        function handleExport() {
+            // Create a temporary link element
+            const link = document.createElement('a');
+            link.href = 'api/export_courses.php';
+            link.target = '_blank';
+            document.body.appendChild(link);
+            
+            // Trigger the download
+            link.click();
+            
+            // Remove the temporary link
+            document.body.removeChild(link);
+            
+            // Show the success notification
+            showExportNotification('all available');
+        }
+
+        function showExportNotification(type) {
+            // Create the toast element
+            const toast = document.createElement('div');
+            toast.id = 'exportToast';
+            toast.className = 'fixed top-4 right-4 bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded shadow-lg transform transition-transform duration-300 ease-in-out translate-x-0 z-50';
+            
+            // Get the course count from the table
+            const courseCount = document.querySelectorAll('tbody tr').length;
+            
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium">Export Successful!</p>
+                        <p class="text-sm mt-1">
+                            Successfully exported ${courseCount} ${courseCount === 1 ? 'course' : 'courses'} from ${type} courses.
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            // Add the toast to the document
+            document.body.appendChild(toast);
+            
+            // Auto-dismiss after 4 seconds
+            setTimeout(() => {
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
         }
     </script>
 </body>

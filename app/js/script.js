@@ -2,10 +2,12 @@
 
 // Function to open the edit course modal and populate its fields
 function openEditModal(course) {
+    console.log('Opening edit modal for course:', course);
     const modal = document.getElementById('editCourseModal');
+    console.log('Modal element:', modal);
     
-    const courseIdField = document.getElementById('edit_course_id');
     const courseCodeField = document.getElementById('edit_course_code');
+    const oldCourseCodeField = document.getElementById('edit_old_course_code');
     const courseNameField = document.getElementById('edit_course_name');
     const creditsField = document.getElementById('edit_credits');
     const departmentSelect = document.getElementById('edit_department');
@@ -26,7 +28,7 @@ function openEditModal(course) {
         const currentPrerequisiteIds = course.prerequisites.map(p => String(p.id));
 
         for (let i = 0; i < prerequisiteSelect.options.length; i++) {
-            if (currentPrerequisiteIds.includes(prerequisiteSelect.options[i].value)) {
+            if (currentPrerequisiteCodes.includes(prerequisiteSelect.options[i].value)) {
                 prerequisiteSelect.options[i].selected = true;
             }
         }
@@ -51,11 +53,11 @@ function deleteCourse(courseId, courseName) {
         form.method = 'POST';
         form.action = 'index.php';
 
-        const inputId = document.createElement('input');
-        inputId.type = 'hidden';
-        inputId.name = 'course_id';
-        inputId.value = courseId;
-        form.appendChild(inputId);
+        const inputCode = document.createElement('input');
+        inputCode.type = 'hidden';
+        inputCode.name = 'course_code';
+        inputCode.value = courseCode;
+        form.appendChild(inputCode);
 
         const inputDelete = document.createElement('input');
         inputDelete.type = 'hidden';
@@ -85,7 +87,6 @@ function filterSelectOptions(selectId, searchInputId) {
         }
     }
 }
-
 
 document.addEventListener('DOMContentLoaded', () => {
     const addPrereqSearch = document.getElementById('prereq_search');

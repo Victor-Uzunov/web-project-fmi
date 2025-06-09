@@ -1,5 +1,4 @@
 <?php
-// app/index.php - Main application logic
 
 require_once __DIR__ . '/config.php';    
 require_once __DIR__ . '/auth.php';         
@@ -52,7 +51,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $conn_check_owner = getDbConnection();
         $stmt_check_owner = $conn_check_owner->prepare("SELECT user_id FROM courses WHERE id = ?");
         if ($stmt_check_owner) {
-            $stmt_check_owner->bind_param("i", $course_id);
+            $stmt_check_owner->bind_param("s", $old_course_code);
             $stmt_check_owner->execute();
             $result_check_owner = $stmt_check_owner->get_result();
             if ($row_check_owner = $result_check_owner->fetch_assoc()) {
@@ -79,9 +78,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $target_course_owner_id = null;
         $conn_check_owner = getDbConnection();
-        $stmt_check_owner = $conn_check_owner->prepare("SELECT user_id FROM courses WHERE id = ?");
+        $stmt_check_owner = $conn_check_owner->prepare("SELECT user_id FROM courses WHERE course_code = ?");
         if ($stmt_check_owner) {
-            $stmt_check_owner->bind_param("i", $course_id);
+            $stmt_check_owner->bind_param("s", $course_code);
             $stmt_check_owner->execute();
             $result_check_owner = $stmt_check_owner->get_result();
             if ($row_check_owner = $result_check_owner->fetch_assoc()) {
@@ -92,8 +91,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $conn_check_owner->close();
 
         if ($target_course_owner_id !== null && ($target_course_owner_id === $current_user_id || ($target_course_owner_id === $system_user_id && $current_user_id === $system_user_id))) {
-            if ($course_id <= 0) {
-                $message = "Invalid course ID for deletion.";
+            if (empty($course_code)) {
+                $message = "Invalid course code for deletion.";
             } else {
                 $response = deleteCourse($course_id, $target_course_owner_id);
                 $message = $response['message'];
