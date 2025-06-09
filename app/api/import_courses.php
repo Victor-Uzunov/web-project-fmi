@@ -3,34 +3,34 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../auth.php';
 require_once __DIR__ . '/../course_manager.php';
 
-// Ensure user is logged in
+
 if (!isLoggedIn()) {
     http_response_code(401);
     echo json_encode(['error' => 'Unauthorized', 'message' => 'Please log in to import courses.']);
     exit();
 }
 
-// Check if it's a POST request with a file
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_FILES['csvFile'])) {
     http_response_code(400);
     echo json_encode(['error' => 'Bad Request', 'message' => 'No CSV file provided.']);
     exit();
 }
 
-// Get the source of the import request
+
 $source = isset($_POST['source']) ? $_POST['source'] : 'user';
 $user_id = $_SESSION['user_id'];
 
 $file = $_FILES['csvFile'];
 
-// Validate file type
+
 if ($file['type'] !== 'text/csv' && $file['type'] !== 'application/vnd.ms-excel') {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid File', 'message' => 'Please upload a valid CSV file.']);
     exit();
 }
 
-// Read and parse the CSV file
+
 $handle = fopen($file['tmp_name'], 'r');
 if (!$handle) {
     http_response_code(500);
@@ -38,7 +38,7 @@ if (!$handle) {
     exit();
 }
 
-// Read header row
+
 $header = fgetcsv($handle);
 if (!$header || count($header) !== 5) {
     fclose($handle);
@@ -47,7 +47,7 @@ if (!$header || count($header) !== 5) {
     exit();
 }
 
-// Validate header columns
+
 $expected_columns = ['course_code', 'course_name', 'credits', 'department', 'dependencies'];
 if ($header !== $expected_columns) {
     fclose($handle);
@@ -61,7 +61,7 @@ $results = [
     'errors' => []
 ];
 
-// Read and process each row
+
 while (($row = fgetcsv($handle)) !== false) {
     if (count($row) !== 5) {
         $results['errors'][] = "Invalid row format: " . implode(',', $row);
@@ -70,34 +70,34 @@ while (($row = fgetcsv($handle)) !== false) {
 
     list($course_code, $course_name, $credits, $department, $dependencies) = $row;
 
-    // Basic validation
+
     if (empty($course_code) || empty($course_name) || empty($credits) || empty($department)) {
         $results['errors'][] = "Missing required fields for course: $course_code";
         continue;
     }
 
-    // Validate credits is a number
+
     if (!is_numeric($credits) || $credits < 1) {
         $results['errors'][] = "Invalid credits value for course: $course_code";
         continue;
     }
 
-    // Validate department
+
     if (!in_array($department, DEPARTMENTS)) {
         $results['errors'][] = "Invalid department '$department' for course: $course_code";
         continue;
     }
 
-    // Process dependencies
+
     $prerequisite_codes = [];
     if (!empty($dependencies)) {
         $prerequisite_codes = array_map('trim', explode(',', $dependencies));
-        $prerequisite_codes = array_filter($prerequisite_codes); // Remove empty values
+        $prerequisite_codes = array_filter($prerequisite_codes);
     }
 
-    // Add the course
+
     $response = addCourse($user_id, $course_code, $course_name, (int)$credits, $department, $prerequisite_codes, 'imported');
-    
+
     if ($response['success']) {
         $results['success'][] = $course_code;
     } else {
@@ -107,7 +107,7 @@ while (($row = fgetcsv($handle)) !== false) {
 
 fclose($handle);
 
-// Return results
+
 echo json_encode([
     'success' => true,
     'message' => sprintf(
@@ -116,5 +116,5 @@ echo json_encode([
         count($results['errors'])
     ),
     'details' => $results,
-    'source' => $source // Include the source in the response
-]); 
+    'source' => $source
+]);

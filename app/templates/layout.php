@@ -1,9 +1,9 @@
 <?php
-// app/templates/layout.php
 
-// Corrected path to config.php - it's in the parent directory of 'templates'
+
+
 require_once __DIR__ . '/../config.php';
-// Corrected path to auth.php - also in the parent directory of 'templates'
+
 require_once __DIR__ . '/../auth.php';
 
 ?>
@@ -30,7 +30,7 @@ require_once __DIR__ . '/../auth.php';
             left: 0;
             width: 100%;
             height: 100%;
-            background: 
+            background:
                 linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(124, 58, 237, 0.1) 50%, rgba(236, 72, 153, 0.1) 100%),
                 url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
             z-index: -1;
@@ -120,7 +120,7 @@ require_once __DIR__ . '/../auth.php';
                 <div class="ml-3">
                     <p class="text-sm font-medium">Export Successful!</p>
                     <p class="text-sm mt-1">
-                        <?php 
+                        <?php
                         $count = $_SESSION['export_success']['count'];
                         $type = $_SESSION['export_success']['type'];
                         echo "Successfully exported {$count} " . ($count === 1 ? 'course' : 'courses') . " from {$type} courses.";
@@ -130,7 +130,7 @@ require_once __DIR__ . '/../auth.php';
             </div>
         </div>
         <script>
-            // Auto-dismiss the toast after 4 seconds
+
             setTimeout(function() {
                 const toast = document.getElementById('exportToast');
                 if (toast) {
@@ -163,14 +163,14 @@ require_once __DIR__ . '/../auth.php';
         <nav class="mb-8 bg-white rounded-lg shadow-sm p-4">
             <div class="flex space-x-4">
                 <?php
-                // Get the current page name
+
                 $current_page = basename($_SERVER['PHP_SELF']);
-                
-                // Determine which view we're in
+
+
                 $is_courses_view = in_array($current_page, ['index.php', 'all_courses.php']);
                 $is_graph_view = in_array($current_page, ['my_courses_graph.php', 'all_courses_graph.php']);
-                
-                // Set up the alternative view links
+
+
                 if ($is_courses_view) {
                     $alternative_link = $current_page === 'index.php' ? 'all_courses.php' : 'index.php';
                     $alternative_view = $current_page === 'index.php' ? 'All Courses' : 'My Courses';
@@ -183,14 +183,14 @@ require_once __DIR__ . '/../auth.php';
                 ?>
 
                 <?php if ($is_courses_view): ?>
-                    <a href="<?php echo $alternative_link; ?>" 
+                    <a href="<?php echo $alternative_link; ?>"
                         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                         </svg>
                         Switch to <?php echo $alternative_view; ?>
                     </a>
-                    <a href="<?php echo $graph_link; ?>" 
+                    <a href="<?php echo $graph_link; ?>"
                         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -200,14 +200,14 @@ require_once __DIR__ . '/../auth.php';
                     <div class="flex-grow"></div>
                     <?php if (strpos($_SERVER['PHP_SELF'], 'all_courses.php') !== false): ?>
                     <div class="flex items-center space-x-4">
-                        <button onclick="document.getElementById('csvFileInput').click()" 
+                        <button onclick="document.getElementById('csvFileInput').click()"
                             class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                             </svg>
                             Import
                         </button>
-                        <button onclick="handleExport()" 
+                        <button onclick="handleExport()"
                             class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -218,14 +218,14 @@ require_once __DIR__ . '/../auth.php';
                     </div>
                     <?php endif; ?>
                 <?php else: ?>
-                    <a href="<?php echo $courses_link; ?>" 
+                    <a href="<?php echo $courses_link; ?>"
                         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                         </svg>
                         Switch to <?php echo $current_page === 'my_courses_graph.php' ? 'My Courses' : 'All Courses'; ?>
                     </a>
-                    <a href="<?php echo $alternative_link; ?>" 
+                    <a href="<?php echo $alternative_link; ?>"
                         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -271,7 +271,7 @@ require_once __DIR__ . '/../auth.php';
     </script>
     <script src="js/script.js" onerror="console.error('Failed to load script.js')" onload="console.log('script.js loaded successfully')"></script>
     <script>
-        // Close dropdowns when clicking outside
+
         document.addEventListener('click', function(event) {
             const dropdowns = document.querySelectorAll('[id$="Dropdown"]');
             dropdowns.forEach(dropdown => {
@@ -281,19 +281,19 @@ require_once __DIR__ . '/../auth.php';
             });
         });
 
-        // Toggle dropdown visibility
+
         function toggleDropdown(dropdownId) {
             const dropdown = document.getElementById(dropdownId);
             const allDropdowns = document.querySelectorAll('[id$="Dropdown"]');
-            
-            // Close all other dropdowns
+
+
             allDropdowns.forEach(d => {
                 if (d.id !== dropdownId) {
                     d.classList.add('hidden');
                 }
             });
-            
-            // Toggle the clicked dropdown
+
+
             dropdown.classList.toggle('hidden');
         }
     </script>
@@ -305,7 +305,7 @@ require_once __DIR__ . '/../auth.php';
         formData.append('csvFile', file);
         formData.append('source', source);
 
-        // Show loading state
+
         const modal = document.getElementById('importResultsModal');
         const content = document.getElementById('importResultsContent');
         content.innerHTML = '<div class="text-center py-4"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div><p class="mt-2 text-gray-600">Importing courses...</p></div>';
@@ -319,7 +319,7 @@ require_once __DIR__ . '/../auth.php';
         .then(response => response.json())
         .then(data => {
             let html = '';
-            
+
             if (data.error) {
                 html = `
                     <div class="bg-red-50 border-l-4 border-red-400 p-4">
@@ -336,7 +336,7 @@ require_once __DIR__ . '/../auth.php';
                     </div>
                 `;
             } else {
-                // Show success message
+
                 html = `
                     <div class="bg-green-50 border-l-4 border-green-400 p-4">
                         <div class="flex">
@@ -352,7 +352,7 @@ require_once __DIR__ . '/../auth.php';
                     </div>
                 `;
 
-                // Show any errors that occurred during import
+
                 if (data.details.errors.length > 0) {
                     html += `
                         <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mt-4">
@@ -400,9 +400,9 @@ require_once __DIR__ . '/../auth.php';
         const modal = document.getElementById('importResultsModal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
-        // Clear the file input
+
         document.getElementById('csvFileInput').value = '';
-        // Redirect based on the current page
+
         if (window.location.pathname.includes('all_courses.php')) {
             window.location.href = '/all_courses.php';
         } else {
@@ -412,31 +412,31 @@ require_once __DIR__ . '/../auth.php';
     </script>
     <script>
         function handleExport() {
-            // Create a temporary link element
+
             const link = document.createElement('a');
             link.href = 'api/export_courses.php';
             link.target = '_blank';
             document.body.appendChild(link);
-            
-            // Trigger the download
+
+
             link.click();
-            
-            // Remove the temporary link
+
+
             document.body.removeChild(link);
-            
-            // Show the success notification
+
+
             showExportNotification('all available');
         }
 
         function showExportNotification(type) {
-            // Create the toast element
+
             const toast = document.createElement('div');
             toast.id = 'exportToast';
             toast.className = 'fixed top-4 right-4 bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded shadow-lg transform transition-transform duration-300 ease-in-out translate-x-0 z-50';
-            
-            // Get the course count from the table
+
+
             const courseCount = document.querySelectorAll('tbody tr').length;
-            
+
             toast.innerHTML = `
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
@@ -452,11 +452,11 @@ require_once __DIR__ . '/../auth.php';
                     </div>
                 </div>
             `;
-            
-            // Add the toast to the document
+
+
             document.body.appendChild(toast);
-            
-            // Auto-dismiss after 4 seconds
+
+
             setTimeout(() => {
                 toast.style.transform = 'translateX(100%)';
                 setTimeout(() => toast.remove(), 300);
