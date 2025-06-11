@@ -2,6 +2,12 @@
 
 A modern web application for managing university courses, built with PHP and MySQL. This application provides an intuitive interface for students and administrators to manage course enrollments, view course relationships, and track academic progress.
 
+# How to run the project with XSAMPP?
+## Database
+After starting MySQL database in the XSAMPP control panel open localhost/phpmyadmin/ and import the init.sql file which is located in db directory. Another option is to run the SQL migration directly from the SQL tab in the phpMyAdmin. The migration should execute successfully in order to procced with the next step.
+## Application
+Important: You should hit localhost/web-project-fmi/app - here is the entryy point - index.php file. The application should start successfully with redirecting to the login page.
+
 ## Features
 
 - 🔐 Secure user authentication and authorization
