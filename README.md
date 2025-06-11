@@ -4,7 +4,8 @@ A modern web application for managing university courses, built with PHP and MyS
 
 # How to run the project with XSAMPP?
 ## Database
-After starting MySQL database in the XSAMPP control panel open localhost/phpmyadmin/ and import the init.sql file which is located in db directory. Another option is to run the SQL migration directly from the SQL tab in the phpMyAdmin. The migration should execute successfully in order to procced with the next step.
+After starting MySQL database in the XSAMPP control panel open localhost/phpmyadmin/ and import the init.sql file which is located in db directory. Another option is to run the SQL migration directly from the SQL tab in the phpMyAdmin. The migration should execute successfully in order to procced with the next step. 
+The config file for the database is located in app directory which is on the root level. In this file nothing should be change as we use the default values for the XSAMPP mySQL database for the user, password and database name.
 ## Application
 Important: You should hit localhost/web-project-fmi/app - here is the entryy point - index.php file. The application should start successfully with redirecting to the login page.
 
