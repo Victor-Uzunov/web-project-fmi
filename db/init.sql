@@ -34,10 +34,13 @@ CREATE TABLE IF NOT EXISTS course_dependencies (
     FOREIGN KEY (prereq_user_id, prerequisite_course_code) REFERENCES courses(user_id, course_code) ON DELETE CASCADE
 );
 
-INSERT IGNORE INTO users (username, password_hash) VALUES
-('system', '$2y$10$XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'); -- Dummy hash, not used for login
+DELETE FROM course_dependencies WHERE course_user_id = 1;
+DELETE FROM courses WHERE user_id = 1;
+INSERT INTO users (id, username, password_hash) VALUES
+(1, 'system', '$2y$10$XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+ON DUPLICATE KEY UPDATE username = username;
 
-INSERT IGNORE INTO courses (course_code, user_id, course_name, credits, department, source_type) VALUES
+INSERT INTO courses (course_code, user_id, course_name, credits, department, source_type) VALUES
 ('MATH101', 1, 'Calculus I', 6, 'Mathematics', 'system'),
 ('MATH102', 1, 'Linear Algebra', 5, 'Mathematics', 'system'),
 ('MATH201', 1, 'Calculus II', 6, 'Mathematics', 'system'),
@@ -66,7 +69,7 @@ INSERT IGNORE INTO courses (course_code, user_id, course_name, credits, departme
 ('SSK102', 1, 'Project Management', 4, 'Soft Skills', 'system'),
 ('SSK201', 1, 'Leadership Skills', 4, 'Soft Skills', 'system');
 
-INSERT IGNORE INTO course_dependencies (course_user_id, course_code, prereq_user_id, prerequisite_course_code) VALUES
+INSERT INTO course_dependencies (course_user_id, course_code, prereq_user_id, prerequisite_course_code) VALUES
 (1, 'MATH201', 1, 'MATH101'),
 (1, 'MATH202', 1, 'MATH101'),
 
@@ -85,5 +88,3 @@ INSERT IGNORE INTO course_dependencies (course_user_id, course_code, prereq_user
 (1, 'ENG201', 1, 'ENG101'),
 
 (1, 'SSK201', 1, 'SSK101');
-
-SELECT 'init.sql script finished successfully with extensive Global';

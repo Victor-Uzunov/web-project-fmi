@@ -2,9 +2,9 @@
 
 
 
-define('DB_SERVER', 'db');
-define('DB_USERNAME', 'php_user');
-define('DB_PASSWORD', 'php_password');
+define('DB_SERVER', 'localhost');
+define('DB_USERNAME', 'root');
+define('DB_PASSWORD', '');
 define('DB_NAME', 'university_courses');
 
 
